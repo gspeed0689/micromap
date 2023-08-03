@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="header">
+    <h1>Pollen reference database</h1>
+  </div>
+  <div class="searchbar">
+    Family : <select id="family" onchange="onFamilyChange(this)">
+      <option value="Cannabaceae">Cannabaceae </option>
+      <option value="None">None </option>
+    </select>
+    Genus : <select id="species">
+      <option value="Canabis">Canabis</option>
+    </select>
+    Species : <select id="species">
+      <option value="Canabis">Canabis</option>
+    </select>
+  </div>
+  <div>
+  <div class="image-gallery" id="gallery">
+
+  </div>
+  <div class="info-container">
+    Comment: This pollen was obtained from a sample taken in Western Europe
+  </div>
+</div>
+  <script>
+    function onFamilyChange(selectElement) {
+      var gallery = document.getElementById('gallery');
+      while (gallery.firstChild) {
+        gallery.firstChild.remove()
+      }
+      console.log(selectElement);
+      if (selectElement.value === "Cannabaceae")
+        showThumbnails();
+    }
+
+    function pad(num, size) {
+      num = num.toString();
+      while (num.length < size) num = "0" + num;
+      return num;
+    }
+
+    function showThumbnails(){
+      var gallery = document.getElementById('gallery')
+      for (var i = 1; i < 87; i++) {
+        var newDiv = document.createElement('div');
+
+        newDiv.className = 'image-item';
+        var img = document.createElement('img');
+        img.src = "pollen/image" + pad(i, 3) + ".png"
+        newDiv.appendChild(img);
+        gallery.appendChild(newDiv);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      showThumbnails();
+
+    }, false);
+  </script>
+</body>
+
+</html>
+
+</html>
