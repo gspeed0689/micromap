@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
+from .MockupDataRepository import MockupDataRepository
+
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -15,9 +17,9 @@ class Settings(BaseSettings):
 settings = Settings()
 
 cors_origins = [
-    "http://localhost:8081",  # Development port. Required for Cross-Origin Resource Sharing (CORS)
+    "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)
+    "http://localhost:8001",
 ]
-
 
 def generate_unique_id(route: APIRoute):
     return f"{route.name}"
@@ -32,6 +34,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+repository = MockupDataRepository()
 
 
 @app.get("/")
@@ -89,14 +93,14 @@ async def submit(family: Optional[str] = Query(default=None),
     return {}
 
 
-@app.post("/get-families/")
+@app.get("/get-families/")
 async def get_families() -> List[str]:
-    return []
+    return repository.get_families()
 
 
-@app.post("/get-genera/")
-async def get_genera() -> List[str]:
-    return []
+@app.get("/get-genera/")
+async def get_genera(familyname: str) -> List[str]:
+    return repository.get_genera(familyname)
 
 
 @app.post("/get-species/")
