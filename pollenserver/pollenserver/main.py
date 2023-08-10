@@ -1,12 +1,12 @@
 from typing import Dict, Optional, List
 
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import  JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
-from .MockupDataRepository import MockupDataRepository
-
+from .mockupdatarepository import MockupDataRepository
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -94,13 +94,13 @@ async def submit(family: Optional[str] = Query(default=None),
 
 
 @app.get("/get-families/")
-async def get_families() -> List[str]:
+async def get_families() -> JSONResponse:
     return repository.get_families()
 
 
 @app.get("/get-genera/")
-async def get_genera(familyname: str) -> List[str]:
-    return repository.get_genera(familyname)
+async def get_genera(familyid: str) -> JSONResponse:
+    return repository.get_genera(familyid)
 
 
 @app.post("/get-species/")
