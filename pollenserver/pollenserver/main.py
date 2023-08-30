@@ -7,6 +7,7 @@ from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
 from .mockupdatarepository import MockupDataRepository
+from .postgresqldatarepository import PostgresqlDataRepository
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -35,7 +36,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-repository = MockupDataRepository()
+#repository = MockupDataRepository()
+repository = PostgresqlDataRepository()
 
 
 @app.get("/")
