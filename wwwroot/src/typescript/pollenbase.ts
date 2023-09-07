@@ -1,4 +1,6 @@
-const APIURLBase: string = "http://localhost:8000/";
+import { DefaultService, OpenAPI } from './client';
+
+OpenAPI.BASE = "http://localhost:8000";
 
 function pad(num: number, size: number) {
   let numStr = num.toString();
@@ -10,44 +12,70 @@ function pad(num: number, size: number) {
  * Populates the family select box in the search bar.
  *
  */
-
-function populateFamilySelect() {
+export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-  fetch(APIURLBase + "get-families/")
-    .then((response) => { return response.json(); })
-    .then((familyList: Families) => {
-      for (const familyid in familyList) {
-        const family = familyList[familyid] as Family;
-        familySelectBox.add(new Option(family.name, familyid));
-      }
-    })
-}
+  let selectedid = null;
 
-function onFamilyChange(selectElement: HTMLSelectElement) {
+  const families = await DefaultService.families();
+
+  for (const family of families) {
+    if (selectedid == null)
+      selectedid = family.id;
+    familySelectBox.add(new Option(family.name, family.id));
+  }
+  if (selectedid) {
+    familySelectBox.value = selectedid;
+    onFamilyChange();
+  }
+ }
+
+export function onFamilyChange() {
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
     gallery.firstChild.remove()
   }
-  populateGeneraSelect(selectElement.value)
+  const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
+  populateGeneraSelect(familySelectBox.value);
 }
 
-function populateGeneraSelect(familyid: string) {
+export function onGeneraChange() {
+  const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
+  populateSpeciesSelect(generaSelectBox.value)
+}
+
+async function populateGeneraSelect(familyid: string) {
   const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
   while (generaSelectBox.firstChild) {
     generaSelectBox.firstChild.remove()
   }
 
-  fetch(APIURLBase + "get-genera/?familyid=" + familyid)
-    .then((response) => { return response.json(); })
-    .then((generaList: Genera) => {
-      for (const genusid in generaList) {
-        const genus = generaList[genusid] as Genus;
-        generaSelectBox.add(new Option(genus.name, genusid));
-      }
-    })
+  const genera = await DefaultService.genera(familyid);
+  for (const genus of genera) {
+    generaSelectBox.add(new Option(genus.name, genus.id));
+  }
 }
 
-function showThumbnails() {
+async function populateSpeciesSelect(generaid: string) {
+  const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+  while (speciesSelectBox.firstChild) {
+    speciesSelectBox.firstChild.remove()
+  }
+
+  const speciesList = await DefaultService.species(generaid);
+  for (const species of speciesList) {
+    speciesSelectBox.add(new Option(species.name, species.id));
+  }
+}
+
+export function onSpeciesChange() {
+  const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+  showThumbnails(speciesSelectBox.value);
+}
+
+function showThumbnails(id: string) {
+  if (id != '9cd23abd-2c09-435b-86e9-93f2827fb721')
+    return;
+
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   for (let i = 1; i < 87; i++) {
     const newDiv = document.createElement('div');
@@ -59,3 +87,4 @@ function showThumbnails() {
     gallery.appendChild(newDiv);
   }
 }
+

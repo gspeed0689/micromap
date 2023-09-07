@@ -7,6 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
   <link rel="stylesheet" href="css/pollenbase.css" />
+  <script src="dist/bundle.js"></script>
 </head>
 
 <body>
@@ -14,16 +15,9 @@
     <h1>Pollen reference database</h1>
   </div>
   <div class="searchbar">
-    <span class="font-bold">Family :</span> <select class="btn" id="family-select" onchange="onFamilyChange(this)">
-
-    </select>
-
-    <span class="font-bold">Genus :</span> <select class="btn" id="genera-select">
-      <option value="Canabis">Canabis</option>
-    </select>
-    <span class="font-bold">Species :</span> <select class="btn" id="species">
-      <option value="Canabis">Canabis</option>
-    </select>
+    <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
+    <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
+    <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
   </div>
   <div>
     <div class="image-gallery" id="gallery">
@@ -33,12 +27,25 @@
       Comment: This pollen was obtained from a sample taken in Western Europe
     </div>
   </div>
-  <script src="js/pollenbase.js" ></script>
+
+  <!--<script src="js/pollenbase.js" ></script>-->
   <script>
-    populateFamilySelect();
-    document.addEventListener('DOMContentLoaded', function () {
-      showThumbnails();
-    }, false);
+      var element = document.getElementById('family-select');
+      element.addEventListener("change", function() {
+        PollenBase.onFamilyChange()
+      });
+      element = document.getElementById('genera-select');
+      element.addEventListener("change", function() {
+        PollenBase.onGeneraChange(element)
+      });
+      element = document.getElementById('species-select');
+      element.addEventListener("change", function() {
+        PollenBase.onSpeciesChange(element)
+      });
+
+      PollenBase.populateFamilySelect();
+
+
   </script>
 </body>
 

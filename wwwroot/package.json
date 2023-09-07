@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "generate-client": "openapi --input http://localhost:8000/openapi.json --output src/typescript/client --client axios",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,8 +14,17 @@
     "@types/node": "^20.4.9",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
+    "axios": "1.5.0",
     "eslint": "^8.46.0",
+    "openapi-typescript-codegen": "^0.23.0",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.1.6"
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.1.6",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "openapi-typescript": "^6.5.4"
   }
 }
