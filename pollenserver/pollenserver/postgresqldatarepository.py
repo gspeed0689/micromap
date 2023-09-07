@@ -5,30 +5,23 @@ import random
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, select
 
-from .models import Family, Genus
-from .ormmodels import ORMFamily, ORMGenus
+from .ormmodels import ORMFamily, ORMGenus, ORMSpecies
 
 class PostgresqlDataRepository:
     def __init__(self):
         self.engine = create_engine("postgresql://postgres:sa@localhost/pollen", echo=True)
 
 
-    def get_families(self) -> Dict[str, Family]:
-        result = {}
+    def get_families(self) -> List[ORMFamily]:
         with Session(self.engine) as session:
-            stmt = select(ORMFamily)
-            for fam in session.scalars(stmt):
-                result[fam.id] = Family(name=fam.name)
-
-        return result
+            return session.scalars(select(ORMFamily)).all()
 
 
-    def get_genera(self, familyid: str) -> Dict[str, Genus]:
-        result = {}
+    def get_genera(self, familyid: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
-            stmt = select(ORMGenus).where(ORMGenus.family_id == familyid)
-            for gen in session.scalars(stmt):
-                result[gen.id] = Genus(name=gen.name)
+            return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid)).all()
 
-        return result
 
+    def get_species(self, genusid: str) -> List[ORMSpecies]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genusid)).all()

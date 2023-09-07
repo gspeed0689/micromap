@@ -9,6 +9,8 @@ from pydantic_settings import BaseSettings
 from .mockupdatarepository import MockupDataRepository
 from .postgresqldatarepository import PostgresqlDataRepository
 
+from .models import Family, Genus, Species
+
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
     max_results: int = 100
@@ -95,19 +97,19 @@ async def submit(family: Optional[str] = Query(default=None),
     return {}
 
 
-@app.get("/get-families/")
-async def get_families() -> JSONResponse:
+@app.get("/families/")
+async def families() -> List[Family]:
     return repository.get_families()
 
 
-@app.get("/get-genera/")
-async def get_genera(familyid: str) -> JSONResponse:
+@app.get("/genera/")
+async def genera(familyid: str) -> List[Genus]:
     return repository.get_genera(familyid)
 
 
-@app.post("/get-species/")
-async def get_species() -> List[str]:
-    return []
+@app.get("/species/")
+async def species(generaid: str) -> List[Species]:
+    return repository.get_species(generaid)
 
 
 @app.post("/get-study-info/")
