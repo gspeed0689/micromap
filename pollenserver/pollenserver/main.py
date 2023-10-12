@@ -9,7 +9,8 @@ from pydantic_settings import BaseSettings
 from .mockupdatarepository import MockupDataRepository
 from .postgresqldatarepository import PostgresqlDataRepository
 
-from .models import Family, Genus, Species
+from .models import CategoryBase, FamilyBase, Family, Genus, Species, ItemBase, Item
+#from .mappers import map_base_to_item
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -97,19 +98,42 @@ async def submit(family: Optional[str] = Query(default=None),
     return {}
 
 
+@app.post("/categories/", status_code=201)
+async def post_category(category: CategoryBase):
+    return { "id": repository.add_category(category) }
+
+
 @app.get("/families/")
 async def families() -> List[Family]:
     return repository.get_families()
+
+@app.post("/families/", status_code=201)
+async def post_family(family: FamilyBase):
+    return { "id": repository.add_family(family) }
 
 
 @app.get("/genera/")
 async def genera(familyid: str) -> List[Genus]:
     return repository.get_genera(familyid)
 
+@app.post("/genera/", status_code=201)
+async def post_genus(genus: GenusBase):
+    return { "id": repository.add_genus(genus) }
+
 
 @app.get("/species/")
 async def species(generaid: str) -> List[Species]:
     return repository.get_species(generaid)
+
+@app.post("/species/", status_code=201)
+async def post_species(species: SpeciesBase):
+    return { "id": repository.add_species(species) }
+
+
+@app.post("/item/")
+async def post_item(item: ItemBase) -> int:
+    repository.add_item(item)
+    return 200
 
 
 @app.post("/get-study-info/")
