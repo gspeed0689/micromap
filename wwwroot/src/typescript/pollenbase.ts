@@ -2,12 +2,6 @@ import { DefaultService, OpenAPI } from './client';
 
 OpenAPI.BASE = "http://localhost:8000";
 
-function pad(num: number, size: number) {
-  let numStr = num.toString();
-  while (numStr.length < size) numStr = "0" + numStr;
-  return numStr;
-}
-
 /**
  * Populates the family select box in the search bar.
  *
@@ -30,10 +24,7 @@ export async function populateFamilySelect(): Promise<void> {
  }
 
 export function onFamilyChange() {
-  const gallery = document.getElementById('gallery') as HTMLDivElement;
-  while (gallery.firstChild) {
-    gallery.firstChild.remove()
-  }
+
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
   populateGeneraSelect(familySelectBox.value);
 }
@@ -41,6 +32,7 @@ export function onFamilyChange() {
 export function onGeneraChange() {
   const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
   populateSpeciesSelect(generaSelectBox.value)
+  showThumbnails(generaSelectBox.value);
 }
 
 async function populateGeneraSelect(familyid: string) {
@@ -72,18 +64,33 @@ export function onSpeciesChange() {
   showThumbnails(speciesSelectBox.value);
 }
 
-function showThumbnails(id: string) {
-  if (id != '9cd23abd-2c09-435b-86e9-93f2827fb721')
-    return;
+export function showcomment(c: string)
+{
+  const comment_div = document.getElementById('info-container') as HTMLDivElement;
+  comment_div.innerHTML = c;
+}
 
+async function showThumbnails(id: string) {
   const gallery = document.getElementById('gallery') as HTMLDivElement;
-  for (let i = 1; i < 87; i++) {
-    const newDiv = document.createElement('div');
+  while (gallery.firstChild) {
+    gallery.firstChild.remove()
+  }
 
+  const items = await DefaultService.items(null, id);
+
+  for (const item of items) {
+    const newDiv = document.createElement('div');
     newDiv.className = 'image-item';
+    const anchor = document.createElement('a');
+    const link = "javascript:PollenBase.showcomment('" + (item.comment !== null ? item.comment as string : "") + "')";
+    console.log(link);
+    anchor.href= link;
+    //anchor.onclick = () => showcomment(;
+
     const img = document.createElement('img');
-    img.src = "pollen/image" + pad(i, 3) + ".png"
-    newDiv.appendChild(img);
+    img.src = "data:image/png;base64," + item.key_image;
+    anchor.appendChild(img);
+    newDiv.appendChild(anchor);
     gallery.appendChild(newDiv);
   }
 }
