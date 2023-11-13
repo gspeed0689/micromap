@@ -14,11 +14,13 @@ setuptools.setup(
     ],
     python_requires='>=3.8',
     install_requires=[
-        'fastapi>=0.88.0',
-        'pydantic>=1.10.2',
+        'fastapi~=0.100.1 ',
+        'pydantic~=2.1.1',
+        'sqlalchemy~=2.0.23',
+        'psycopg2~=2.9.9'
     ],
     extras_require={
-        'asgi webserver': ['uvicorn>=0.20.0'],
-        'wsgi support': ['a2wsgi>=1.7.0'],
+        'asgi webserver': ['uvicorn~=0.20.0'],
+        'wsgi support': ['a2wsgi~=1.7.0'],
     }
 )
