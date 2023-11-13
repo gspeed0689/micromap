@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, select
 
 from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem
-from .models import ItemBase, CategoryBase, FamilyBase
+from .models import ItemBase, CategoryBase, FamilyBase, GenusBase, SpeciesBase
 
 class PostgresqlDataRepository:
     def __init__(self):
@@ -14,6 +14,10 @@ class PostgresqlDataRepository:
 
     def create_database(self):
         Base.metadata.create_all(engine)
+
+    def get_categories(self) -> List[ORMCategory]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMCategory)).all()
 
 
     def get_families(self) -> List[ORMFamily]:
@@ -74,10 +78,29 @@ class PostgresqlDataRepository:
 
     def add_item(self, new_item: ItemBase)-> UUID:
         new_uuid = uuid4()
-        db_item = ORMItem(id = new_uuid, key_image = new_item.key_image, species_id = new_item.species_id, genus_id = new_item.genus_id, family_id = new_item.family_id)
+        db_item = ORMItem(
+            id = new_uuid,
+            key_image = new_item.key_image,
+            species_id = new_item.species_id,
+            genus_id = new_item.genus_id,
+            family_id = new_item.family_id,
+            study_description = new_item.study_description,
+            study_remarks = new_item.study_remarks,
+            study_location = new_item.study_location,
+            sample_description = new_item.sample_description,
+            sample_remarks = new_item.sample_remarks,
+            sample_location = new_item.sample_location,
+            sample_age = new_item.sample_age,
+            slide_description = new_item.slide_description,
+            slide_remarks = new_item.slide_remarks,
+            )
 
         with Session(self.engine) as session:
             session.add(db_item)
             session.commit()
 
         return new_uuid
+
+    def get_items(self, genus_id: UUID = None) -> List[ORMItem]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMItem).where(ORMItem.genus_id == genus_id)).all()

@@ -13,7 +13,7 @@ class ORMCategory(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
 
     # Name of the category
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
 
 class ORMFamily(Base):
@@ -23,7 +23,7 @@ class ORMFamily(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
 
     # Name of the family
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Reference to the Category that this Family belongs to
     category_id: Mapped[UUID] = mapped_column(ForeignKey("category.id"), nullable=False)
@@ -39,7 +39,7 @@ class ORMGenus(Base):
     __tablename__ = "genus"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     family_id: Mapped[UUID] = mapped_column(ForeignKey("family.id"), nullable=False)
     family: Mapped["ORMFamily"] = relationship(back_populates="genera")
     species: Mapped[List["ORMSpecies"]]= relationship(back_populates="genus")
@@ -49,7 +49,7 @@ class ORMSpecies(Base):
     __tablename__ = "species"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"))
     genus: Mapped["ORMGenus"] = relationship(back_populates="species")
 
@@ -62,4 +62,18 @@ class ORMItem(Base):
     species_id: Mapped[UUID] = mapped_column(ForeignKey("species.id"), nullable=True)
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"), nullable=True)
     family_id: Mapped[UUID] = mapped_column(ForeignKey("family.id"), nullable=True)
+
+    comment: Mapped[str] = mapped_column(String, nullable=True)
+
+    #pixel_size?
+
+    study_description: Mapped[str] = mapped_column(String, nullable=True)
+    study_remarks: Mapped[str] = mapped_column(String, nullable=True)
+    study_location: Mapped[str] = mapped_column(String, nullable=True)
+    sample_description: Mapped[str] = mapped_column(String, nullable=True)
+    sample_remarks: Mapped[str] = mapped_column(String, nullable=True)
+    sample_location: Mapped[str] = mapped_column(String, nullable=True)
+    sample_age: Mapped[str] = mapped_column(String, nullable=True)
+    slide_description: Mapped[str] = mapped_column(String, nullable=True)
+    slide_remarks: Mapped[str] = mapped_column(String, nullable=True)
 

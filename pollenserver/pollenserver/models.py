@@ -22,9 +22,9 @@ class Family(FamilyBase):
     class Config:
         from_attributes = True
 
-
 class GenusBase(BaseModel):
     name: str
+    family_id: UUID
 
 class Genus(GenusBase):
     id: UUID
@@ -48,6 +48,17 @@ class ItemBase(BaseModel):
     family_id: Optional[UUID] = None
     genus_id: Optional[UUID] = None
     species_id: Optional[UUID] = None
+    comment: Optional[str] = None
+
+    study_description: Optional[str] = None
+    study_remarks: Optional[str] = None
+    study_location: Optional[str] = None
+    sample_description: Optional[str] = None
+    sample_remarks: Optional[str] = None
+    sample_location: Optional[str] = None
+    sample_age: Optional[str] = None
+    slide_description: Optional[str] = None
+    slide_remarks: Optional[str] = None
 
 class Item(ItemBase):
     id: UUID

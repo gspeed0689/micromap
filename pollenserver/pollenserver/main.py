@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 from .mockupdatarepository import MockupDataRepository
 from .postgresqldatarepository import PostgresqlDataRepository
 
-from .models import CategoryBase, FamilyBase, Family, Genus, Species, ItemBase, Item
+from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item
 #from .mappers import map_base_to_item
 
 # Default values. These values can also be set using environment variables.
@@ -48,15 +48,15 @@ async def root():
     return {"message": "PollenBase API"}
 
 
-@app.post("/submit/")
-async def submit(family: Optional[str] = Query(default=None),
-                 genus: Optional[str] = Query(default=None),
-                 species: Optional[str] = Query(default=None),
-                 study: Optional[str] = Query(default=None),
-                 sample: Optional[str] = Query(default=None),
-                 slide: Optional[str] = Query(default=None),
-                 max_results: int = settings.max_results,
-                 order: str = settings.default_order) -> Dict:
+@app.get("/items/")
+async def items(family: Optional[str] = Query(default=None),
+                genus: Optional[str] = Query(default=None),
+                species: Optional[str] = Query(default=None),
+                study: Optional[str] = Query(default=None),
+                sample: Optional[str] = Query(default=None),
+                slide: Optional[str] = Query(default=None),
+                max_results: int = settings.max_results,
+                order: str = settings.default_order) -> List[Item]:
     """
     Handles a new query for pollen images.
 
@@ -70,22 +70,13 @@ async def submit(family: Optional[str] = Query(default=None),
     :param order: The order in which the results are returned.
     :return: A dictionary with matches.
     """
-    # A genus may not be specific to a particular family, so the family must be given.
-    if genus and not family:
-        raise HTTPException(400, detail="A genus was requested, but the family was not provided")
-
-    # A species may not be specific to a particular genus, so the genus must be given.
-    if species and not genus:
-        raise HTTPException(400, detail="A species was requested, but the genus was not provided")
-
     # Build search query
 
     if species:
         # TODO: Search on species level.
         pass
     elif genus:
-        # TODO: Search on genus level.
-        pass
+        return repository.get_items(genus_id=genus)
     elif family:
         # TODO: Search on family level.
         pass
@@ -97,6 +88,10 @@ async def submit(family: Optional[str] = Query(default=None),
     #  contains a low-resolution image, taxonomic info and study info. Other info can be queried using the pollen id.
     return {}
 
+
+@app.get("/categories/")
+async def category() -> List[Category]:
+    return repository.get_categories()
 
 @app.post("/categories/", status_code=201)
 async def post_category(category: CategoryBase):
