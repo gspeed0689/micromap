@@ -23,17 +23,17 @@ class PostgresqlDataRepository:
 
     def get_families(self) -> List[ORMFamily]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMFamily)).all()
+            return session.scalars(select(ORMFamily).order_by(ORMFamily.name)).all()
 
 
     def get_genera(self, familyid: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid)).all()
+            return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid).order_by(ORMGenus.name)).all()
 
 
     def get_species(self, genusid: str) -> List[ORMSpecies]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genusid)).all()
+            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genusid).order_by(ORMSpecies.name)).all()
 
 
     def add_category(self, new_category: CategoryBase)-> UUID:

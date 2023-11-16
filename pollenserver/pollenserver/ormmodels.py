@@ -54,6 +54,33 @@ class ORMSpecies(Base):
     genus: Mapped["ORMGenus"] = relationship(back_populates="species")
 
 
+class ORMStudy(Base):
+    __tablename__ = "study"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    location: Mapped[str] = mapped_column(String, nullable=True)
+    remarks: Mapped[str] = mapped_column(String, nullable=True)
+
+
+class ORMSample(Base):
+    __tablename__ = "sample"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    location: Mapped[str] = mapped_column(String, nullable=True)
+    age: Mapped[str] = mapped_column(String, nullable=True)
+    remarks: Mapped[str] = mapped_column(String, nullable=True)
+
+
+class ORMSlide(Base):
+    __tablename__ = "slide"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    location: Mapped[str] = mapped_column(String, nullable=True)
+
+
 class ORMItem(Base):
     __tablename__ = "item"
 
@@ -65,15 +92,8 @@ class ORMItem(Base):
 
     comment: Mapped[str] = mapped_column(String, nullable=True)
 
+    study_id: Mapped[UUID] = mapped_column(ForeignKey("study.id"), nullable=True)
+    sample_id: Mapped[UUID] = mapped_column(ForeignKey("sample.id"), nullable=True)
+    slide_id: Mapped[UUID] = mapped_column(ForeignKey("slide.id"), nullable=True)
+
     #pixel_size?
-
-    study_description: Mapped[str] = mapped_column(String, nullable=True)
-    study_remarks: Mapped[str] = mapped_column(String, nullable=True)
-    study_location: Mapped[str] = mapped_column(String, nullable=True)
-    sample_description: Mapped[str] = mapped_column(String, nullable=True)
-    sample_remarks: Mapped[str] = mapped_column(String, nullable=True)
-    sample_location: Mapped[str] = mapped_column(String, nullable=True)
-    sample_age: Mapped[str] = mapped_column(String, nullable=True)
-    slide_description: Mapped[str] = mapped_column(String, nullable=True)
-    slide_remarks: Mapped[str] = mapped_column(String, nullable=True)
-
