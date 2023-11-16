@@ -7,46 +7,69 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
   <link rel="stylesheet" href="css/pollenbase.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+    integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
   <script src="dist/bundle.js"></script>
 </head>
 
 <body>
   <div class="header">
-    <h1>Pollen reference database</h1>
+    <h2>Pollen reference database</h2>
   </div>
+
   <div class="searchbar">
     <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
     <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
     <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
   </div>
-  <div>
+
+  <div id="wrapper">
     <div class="image-gallery" id="gallery">
 
     </div>
-    <div class="info-container" id="info-container">
-      Comment: This pollen was obtained from a sample taken in Western Europe
+    <div id="viewer-container">
+      No image
     </div>
   </div>
-  <div class="fullview">
 
+  <div id="infopanel">
+    <span><b>Study</b></span>
+    <div><span>Description: </span><span id="info-study-description">-</span></div>
+    <div><span>Location: </span><span id="info-study-location">-</span></div>
+    <div><span>Remarks: </span><span id="info-study-remarks">-</span></div>
+
+    <span><b>Sample</b></span>
+    <div><span>Description: </span><span id="info-sample-description">-</span></div>
+    <div><span>Location: </span><span id="info-sample-location">-</span></div>
+    <div><span>Age: </span><span id="info-sample-age">-</span></div>
+    <div><span>Remarks: </span><span id="info-sample-remarks">-</span></div>
+
+    <span><b>Slide</b></span>
+    <div><span>Description: </span><span id="info-slide-description">-</span></div>
+    <div><span>Location: </span><span id="info-slide-location">-</span></div>
+    <div><span>Path: </span><span id="info-slide-path">-</span></div>
+    <div><span>Statistics: </span><span id="info-slide-statistics">-</span></div>
   </div>
 
   <!--<script src="js/pollenbase.js" ></script>-->
   <script>
-      var element = document.getElementById('family-select');
-      element.addEventListener("change", function() {
-        PollenBase.onFamilyChange()
-      });
-      element = document.getElementById('genera-select');
-      element.addEventListener("change", function() {
-        PollenBase.onGeneraChange(element)
-      });
-      element = document.getElementById('species-select');
-      element.addEventListener("change", function() {
-        PollenBase.onSpeciesChange(element)
-      });
+    var element = document.getElementById('family-select');
+    element.addEventListener("change", function () {
+      PollenBase.onFamilyChange()
+    });
+    element = document.getElementById('genera-select');
+    element.addEventListener("change", function () {
+      PollenBase.onGeneraChange(element)
+    });
+    element = document.getElementById('species-select');
+    element.addEventListener("change", function () {
+      PollenBase.onSpeciesChange(element)
+    });
 
-      PollenBase.populateFamilySelect();
+    PollenBase.populateFamilySelect();
+    PollenBase.onFamilyChange();
 
 
   </script>

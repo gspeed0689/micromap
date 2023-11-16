@@ -17,6 +17,11 @@ body {
   padding: 5px;
 }
 
+h2 {
+  font-size: large;
+  font-weight: bold;
+}
+
 .searchbar {
   background-color: #fff090;
   padding: 5px;
@@ -46,15 +51,33 @@ body {
 }
 
 .image-item img {
-  width: 100px;
+  width: 120px;
   border-radius: 5px;
-  height: 100px;
+  height: 120px;
   object-fit: fill;
 }
 
-.btn
-{
+.btn {
   @apply m-1 p-1 bg-green-200 rounded-lg;
 }
 
+#wrapper {
+  /*border: 5px solid blue;*/
+  display: flex;
+  flex-grow: 1;
+}
 
+#gallery {
+  border: 1px solid rgb(44, 43, 43);
+  align-content: flex-start;
+  flex: 1;
+}
+
+#infopanel {
+  position: absolute;
+  background-color: antiquewhite;
+  bottom: 0;
+  border: 1px solid green;
+  height: 350px;
+  width: 100%;
+ }
