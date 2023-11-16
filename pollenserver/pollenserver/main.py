@@ -23,6 +23,7 @@ settings = Settings()
 cors_origins = [
     "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)
     "http://localhost:8001",
+    "*"
 ]
 
 def generate_unique_id(route: APIRoute):
@@ -72,14 +73,14 @@ async def items(family: Optional[str] = Query(default=None),
     """
     # Build search query
 
+    print('/items', family, genus)
     if species:
         # TODO: Search on species level.
         pass
     elif genus:
         return repository.get_items(genus_id=genus)
     elif family:
-        # TODO: Search on family level.
-        pass
+        return repository.get_items(family_id=family)
     else:
         # TODO: Search on database level.
         pass
