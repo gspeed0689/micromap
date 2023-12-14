@@ -1,6 +1,7 @@
 import { DefaultService, OpenAPI, Item } from './client';
 import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
+import { ScaleBar } from "./scalebar";
 
 OpenAPI.BASE = "http://localhost:8000";
 let viewer = null;
@@ -91,30 +92,27 @@ export function onSpeciesChange() {
 export function thumbnailSelected(c: string) {
   const selectedItem = currentItems.find((element) => element.id === c);
 
-  // let infoSpan = document.getElementById('info-study-description') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.study_description;
-  // infoSpan = document.getElementById('info-study-location') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.study_location;
-  // infoSpan = document.getElementById('info-study-remarks') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.study_remarks;
+   let infoSpan = document.getElementById('info-study-description') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.study.description;
+   infoSpan = document.getElementById('info-study-location') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.study.location;
+   infoSpan = document.getElementById('info-study-remarks') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.study.remarks;
 
-  // infoSpan = document.getElementById('info-sample-description') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.sample_description
-  // infoSpan = document.getElementById('info-sample-location') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.sample_location
-  // infoSpan = document.getElementById('info-sample-age') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.sample_age
-  // infoSpan = document.getElementById('info-sample-remarks') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.sample_remarks
+   infoSpan = document.getElementById('info-sample-description') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.description
+   infoSpan = document.getElementById('info-sample-location') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.location
+   infoSpan = document.getElementById('info-sample-age') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.age
+   infoSpan = document.getElementById('info-sample-remarks') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.remarks
 
-  // infoSpan = document.getElementById('info-slide-description') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.slide_description
-  // infoSpan = document.getElementById('info-slide-location') as HTMLSpanElement;
-  // //  infoSpan.textContent = selectedItem.slide_location;
-  // infoSpan = document.getElementById('info-slide-path') as HTMLSpanElement;
-  // // infoSpan.textContent = selectedItem.slide_path;
-  // infoSpan = document.getElementById('info-slide-statistics') as HTMLSpanElement;
-  // infoSpan.textContent = selectedItem.slide_remarks;
+   infoSpan = document.getElementById('info-slide-description') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.description
+   infoSpan = document.getElementById('info-slide-location') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.location;
+
 
   const f: string[] = ['prepared/o_' + c + '/' + c + '_1.png',
   'prepared/o_' + c + '/' + c + '_2.png',
@@ -125,6 +123,7 @@ export function thumbnailSelected(c: string) {
 
   viewer = new Viewer('#viewer-container', 'viewer', 400, 400, f, null);
   const slider = new FocusSlider(viewer, "#viewer-focus-slider");
+  const scaleBar = new ScaleBar(viewer, "#viewer-scalebar", selectedItem.voxel_width);
 }
 
 async function showThumbnails(genus_id: string, family_id: string) {
