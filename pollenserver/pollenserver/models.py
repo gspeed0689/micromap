@@ -36,7 +36,43 @@ class Genus(GenusBase):
 class SpeciesBase(BaseModel):
     name: str
 
-class Species(GenusBase):
+class Species(SpeciesBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
+
+class StudyBase(BaseModel):
+    description: Optional[str]
+    location: Optional[str]
+    remarks: Optional[str]
+
+class Study(StudyBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
+
+class SampleBase(BaseModel):
+    description: Optional[str]
+    location: Optional[str]
+    age: Optional[str]
+    remarks: Optional[str]
+    study: StudyBase
+
+
+class Sample(SampleBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
+
+class SlideBase(BaseModel):
+    description: Optional[str]
+    location: Optional[str]
+    sample: SampleBase
+
+class Slide(SlideBase):
     id: UUID
 
     class Config:
@@ -50,15 +86,10 @@ class ItemBase(BaseModel):
     species_id: Optional[UUID] = None
     comment: Optional[str] = None
 
-    study_description: Optional[str] = None
-    study_remarks: Optional[str] = None
-    study_location: Optional[str] = None
-    sample_description: Optional[str] = None
-    sample_remarks: Optional[str] = None
-    sample_location: Optional[str] = None
-    sample_age: Optional[str] = None
-    slide_description: Optional[str] = None
-    slide_remarks: Optional[str] = None
+    slide: Slide = None
+
+    voxel_width: float = None
+
 
 class Item(ItemBase):
     id: UUID

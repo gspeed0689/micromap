@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Float
 from uuid import UUID
 from typing import List
 
@@ -67,18 +67,26 @@ class ORMSample(Base):
     __tablename__ = "sample"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    study_id: Mapped[UUID] = mapped_column(ForeignKey("study.id"), nullable=False)
+
     description: Mapped[str] = mapped_column(String, nullable=True)
     location: Mapped[str] = mapped_column(String, nullable=True)
     age: Mapped[str] = mapped_column(String, nullable=True)
     remarks: Mapped[str] = mapped_column(String, nullable=True)
+
+    study: Mapped[ORMStudy] = relationship("ORMStudy", lazy='subquery')
 
 
 class ORMSlide(Base):
     __tablename__ = "slide"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    sample_id: Mapped[UUID] = mapped_column(ForeignKey("sample.id"), nullable=False)
+
     description: Mapped[str] = mapped_column(String, nullable=True)
     location: Mapped[str] = mapped_column(String, nullable=True)
+
+    sample: Mapped[ORMSample] = relationship("ORMSample", lazy='subquery')
 
 
 class ORMItem(Base):
@@ -92,8 +100,10 @@ class ORMItem(Base):
 
     comment: Mapped[str] = mapped_column(String, nullable=True)
 
-    study_id: Mapped[UUID] = mapped_column(ForeignKey("study.id"), nullable=True)
-    sample_id: Mapped[UUID] = mapped_column(ForeignKey("sample.id"), nullable=True)
     slide_id: Mapped[UUID] = mapped_column(ForeignKey("slide.id"), nullable=True)
+
+    slide: Mapped["ORMSlide"] = relationship("ORMSlide", lazy='subquery')
+
+    voxel_width: Mapped[float] = mapped_column(Float, nullable=False)
 
     #pixel_size?
