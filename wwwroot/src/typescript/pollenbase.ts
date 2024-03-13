@@ -1,4 +1,4 @@
-import { DefaultService, OpenAPI, Item } from './client';
+import { DefaultService, OpenAPI, Item, Family } from './client';
 import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
@@ -6,6 +6,7 @@ import { ScaleBar } from "./scalebar";
 OpenAPI.BASE = "http://localhost:8000";
 let viewer = null;
 let currentItems: Array<Item> = null;
+let families: Array<Family> = null;
 
 /**
  * Populates the family select box in the search bar.
@@ -89,7 +90,7 @@ export function onSpeciesChange() {
   showThumbnails(speciesSelectBox.value, null);
 }
 
-export function thumbnailSelected(c: string) {
+export async function thumbnailSelected(c: string) {
   const selectedItem = currentItems.find((element) => element.id === c);
 
    let infoSpan = document.getElementById('info-study-description') as HTMLSpanElement;
@@ -127,6 +128,9 @@ export function thumbnailSelected(c: string) {
 }
 
 async function showThumbnails(genus_id: string, family_id: string) {
+  if (families == null)
+    families = await DefaultService.families();
+
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
     gallery.firstChild.remove()
@@ -141,11 +145,13 @@ async function showThumbnails(genus_id: string, family_id: string) {
   }
 
   for (const item of currentItems) {
+    console.log(item);
     const newDiv = document.createElement('div');
     newDiv.className = 'image-item';
+    const family = families.find((family) => family.id === item.family_id);
+    newDiv.title = family.name;
     const anchor = document.createElement('a');
     const link = "javascript:PollenBase.thumbnailSelected('" + item.id + "')";
-    console.log(link);
     anchor.href = link;
 
     const img = document.createElement('img');

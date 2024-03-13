@@ -13,7 +13,7 @@ body {
 }
 
 .header {
-  background-color: #ffcd00;
+  @apply bg-gradient-to-r from-[#ffcd00] to-transparent;
   padding: 5px;
 }
 
@@ -23,9 +23,26 @@ h2 {
 }
 
 .searchbar {
-  background-color: #fff090;
+  @apply bg-gradient-to-r from-[#fff090] to-transparent;
   padding: 5px;
 }
+
+.image-gallery {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  order: 1px solid rgb(44, 43, 43);
+  align-content: flex-start;
+ }
+
+.image-item img {
+  width: 120px;
+  border-radius: 5px;
+  height: 120px;
+  object-fit: fill;
+}
+
 
 .info-container {
   background-color: darkgray;
@@ -35,42 +52,15 @@ h2 {
   height: 200px;
 }
 
-.container {
-  padding: 40px 5%;
-  overflow: auto;
-}
-
-/* Responsive image gallery rules begin*/
-
-.image-gallery {
-  /* Mobile first */
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.image-item img {
-  width: 120px;
-  border-radius: 5px;
-  height: 120px;
-  object-fit: fill;
-}
 
 .btn {
   @apply m-1 p-1 bg-green-200 rounded-lg;
 }
 
 #wrapper {
-  /*border: 5px solid blue;*/
   display: flex;
-  flex-grow: 1;
-}
 
-#gallery {
-  border: 1px solid rgb(44, 43, 43);
-  align-content: flex-start;
-  flex: 1;
+  flex-grow: 1;
 }
 
 #infopanel {
@@ -109,4 +99,9 @@ h2 {
 .info-sub-panel>.item-contents {
   font-weight: 300;
   font-size: medium;
+}
+
+.container{
+  display: flex;
+  flex-direction: column;
 }

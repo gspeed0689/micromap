@@ -15,44 +15,50 @@
 </head>
 
 <body>
-  <div class="header">
-    <h2>Pollen reference database</h2>
-  </div>
-
-  <div class="searchbar">
-    <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
-    <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
-    <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
-  </div>
-
-  <div id="wrapper">
-    <div class="image-gallery" id="gallery">
-
+  <div class="container">
+    <div class="header">
+      <h2>Pollen reference database</h2>
     </div>
-    <div id="viewer-container">
-      No image
-    </div>
-  </div>
 
-  <div  id="infopanel">
-    <div class="info-sub-panel">
-    <span class="panel-header">Study</span><br>
-    <span class="item-header">Description: </span><span id="info-study-description" class="item-contents">-</span><br>
-    <span class="item-header">Location: </span><span id="info-study-location" class="item-contents">-</span><br>
-    <span class="item-header">Remarks: </span><span id="info-study-remarks" class="item-contents">-</span>
-  </div>
-  <div class="info-sub-panel">
-    <span class="panel-header">Sample</span><br>
-    <span class="item-header">Description: </span><span id="info-sample-description" class="item-contents">-</span><br>
-    <span class="item-header">Location: </span><span id="info-sample-location" class="item-contents">-</span><br>
-    <span class="item-header">Age: </span><span id="info-sample-age" class="item-contents">-</span><br>
-    <span class="item-header">Remarks: </span><span id="info-sample-remarks" class="item-contents">-</span>
-  </div>
-  <div class="info-sub-panel">
-    <span class="panel-header">Slide</span><br>
-    <span class="item-header">Description: </span><span id="info-slide-description" class="item-contents">-</span><br>
-    <span class="item-header">Location: </span><span id="info-slide-location" class="item-contents">-</span>
-  </div>
+    <div class="searchbar">
+      <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
+      <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
+      <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
+    </div>
+    <div style="flex-grow: 1;">
+      <div id="wrapper">
+        <div class="image-gallery" id="gallery">
+
+        </div>
+        <div id="viewer-container">
+          No image
+        </div>
+      </div>
+    </div>
+
+    <div id="infopanel">
+      <div class="info-sub-panel">
+        <span class="panel-header">Study</span><br>
+        <span class="item-header">Description: </span><span id="info-study-description"
+          class="item-contents">-</span><br>
+        <span class="item-header">Location: </span><span id="info-study-location" class="item-contents">-</span><br>
+        <span class="item-header">Remarks: </span><span id="info-study-remarks" class="item-contents">-</span>
+      </div>
+      <div class="info-sub-panel">
+        <span class="panel-header">Sample</span><br>
+        <span class="item-header">Description: </span><span id="info-sample-description"
+          class="item-contents">-</span><br>
+        <span class="item-header">Location: </span><span id="info-sample-location" class="item-contents">-</span><br>
+        <span class="item-header">Age: </span><span id="info-sample-age" class="item-contents">-</span><br>
+        <span class="item-header">Remarks: </span><span id="info-sample-remarks" class="item-contents">-</span>
+      </div>
+      <div class="info-sub-panel">
+        <span class="panel-header">Slide</span><br>
+        <span class="item-header">Description: </span><span id="info-slide-description"
+          class="item-contents">-</span><br>
+        <span class="item-header">Location: </span><span id="info-slide-location" class="item-contents">-</span>
+      </div>
+    </div>
   </div>
 
   <!--<script src="js/pollenbase.js" ></script>-->
@@ -72,8 +78,6 @@
 
     PollenBase.populateFamilySelect();
     PollenBase.onFamilyChange();
-
-
   </script>
 </body>
 
