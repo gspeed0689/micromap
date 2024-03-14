@@ -33,8 +33,8 @@ h2 {
   flex-wrap: wrap;
   gap: 10px;
   order: 1px solid rgb(44, 43, 43);
-  align-content: flex-start;
- }
+  align-content: start;
+}
 
 .image-item img {
   width: 120px;
@@ -43,6 +43,10 @@ h2 {
   object-fit: fill;
 }
 
+.wrapper {
+  height: calc(100vh - 435px);
+  overflow-y: scroll;
+}
 
 .info-container {
   background-color: darkgray;
@@ -101,7 +105,7 @@ h2 {
   font-size: medium;
 }
 
-.container{
+.container {
   display: flex;
   flex-direction: column;
 }
