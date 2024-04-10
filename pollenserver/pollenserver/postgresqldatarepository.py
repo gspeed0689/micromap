@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import or_
 from sqlalchemy import create_engine, select
 
-from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem
+from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, Base
 from .models import ItemBase, CategoryBase, FamilyBase, GenusBase, SpeciesBase
 
 class PostgresqlDataRepository:
@@ -14,21 +14,24 @@ class PostgresqlDataRepository:
 
 
     def create_database(self):
-        Base.metadata.create_all(engine)
+        Base.metadata.create_all(self.engine)
 
     def get_categories(self) -> List[ORMCategory]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMCategory)).all()
 
 
-    def get_families(self) -> List[ORMFamily]:
+    def get_families(self, categoryid: str) -> List[ORMFamily]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMFamily).order_by(ORMFamily.name)).all()
+            return session.scalars(select(ORMFamily).where(ORMFamily.category_id == categoryid).order_by(ORMFamily.name)).all()
 
 
     def get_genera(self, familyid: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid).order_by(ORMGenus.name)).all()
+            if familyid:
+                return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid).order_by(ORMGenus.name)).all()
+            else:
+                return session.scalars(select(ORMGenus).order_by(ORMGenus.name)).all()
 
 
     def get_species(self, genusid: str) -> List[ORMSpecies]:

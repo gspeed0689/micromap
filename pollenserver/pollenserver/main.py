@@ -6,11 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
-from .mockupdatarepository import MockupDataRepository
 from .postgresqldatarepository import PostgresqlDataRepository
-
 from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item
-#from .mappers import map_base_to_item
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -40,7 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#repository = MockupDataRepository()
 repository = PostgresqlDataRepository()
 
 
@@ -100,8 +96,8 @@ async def post_category(category: CategoryBase):
 
 
 @app.get("/families/")
-async def families() -> List[Family]:
-    return repository.get_families()
+async def families(category_id: str) -> List[Family]:
+    return repository.get_families(category_id)
 
 @app.post("/families/", status_code=201)
 async def post_family(family: FamilyBase):

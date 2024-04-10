@@ -35,8 +35,19 @@ class Genus(GenusBase):
 
 class SpeciesBase(BaseModel):
     name: str
+    genus_id: UUID
 
 class Species(SpeciesBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
+
+class SubSpeciesBase(BaseModel):
+    name: str
+    species_id: UUID
+
+class SubSpecies(SpeciesBase):
     id: UUID
 
     class Config:
@@ -84,6 +95,7 @@ class ItemBase(BaseModel):
     family_id: Optional[UUID] = None
     genus_id: Optional[UUID] = None
     species_id: Optional[UUID] = None
+    subspecies_id: Optional[UUID] = None
     comment: Optional[str] = None
 
     slide: Slide = None

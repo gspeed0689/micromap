@@ -52,6 +52,17 @@ class ORMSpecies(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"))
     genus: Mapped["ORMGenus"] = relationship(back_populates="species")
+    subspecies: Mapped[List["ORMSubSpecies"]]= relationship(back_populates="species")
+
+
+class ORMSubSpecies(Base):
+    __tablename__ = "subspecies"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    species_id: Mapped[UUID] = mapped_column(ForeignKey("species.id"))
+    species: Mapped["ORMSpecies"] = relationship(back_populates="subspecies")
+
 
 
 class ORMStudy(Base):
@@ -94,6 +105,7 @@ class ORMItem(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     key_image: Mapped[str] = mapped_column(String, nullable=True)
+    subspecies_id: Mapped[UUID] = mapped_column(ForeignKey("subspecies.id"), nullable=True)
     species_id: Mapped[UUID] = mapped_column(ForeignKey("species.id"), nullable=True)
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"), nullable=True)
     family_id: Mapped[UUID] = mapped_column(ForeignKey("family.id"), nullable=True)
@@ -105,5 +117,3 @@ class ORMItem(Base):
     slide: Mapped["ORMSlide"] = relationship("ORMSlide", lazy='subquery')
 
     voxel_width: Mapped[float] = mapped_column(Float, nullable=False)
-
-    #pixel_size?
