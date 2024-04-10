@@ -3,10 +3,12 @@ import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
 
-OpenAPI.BASE = "http://localhost:8000";
+OpenAPI.BASE = 'http://localhost:8000';
+const CATALOGID = 'b788163e-cc97-4333-85f0-f7de210fe416';
 let viewer = null;
 let currentItems: Array<Item> = null;
 let families: Array<Family> = null;
+//let genera: Array<Genus> = null;
 
 /**
  * Populates the family select box in the search bar.
@@ -16,7 +18,7 @@ export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
   let selectedid = null;
 
-  const families = await DefaultService.families();
+  const families = await DefaultService.families(CATALOGID);
 
   for (const family of families) {
     if (selectedid == null)
@@ -129,7 +131,7 @@ export async function thumbnailSelected(c: string) {
 
 async function showThumbnails(genus_id: string, family_id: string) {
   if (families == null)
-    families = await DefaultService.families();
+    families = await DefaultService.families(CATALOGID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
@@ -148,8 +150,8 @@ async function showThumbnails(genus_id: string, family_id: string) {
     console.log(item);
     const newDiv = document.createElement('div');
     newDiv.className = 'image-item';
-    const family = families.find((family) => family.id === item.family_id);
-    newDiv.title = family.name;
+    //const family = families.find((family) => family.id === item.family_id);
+    //newDiv.title = family.name;
     const anchor = document.createElement('a');
     const link = "javascript:PollenBase.thumbnailSelected('" + item.id + "')";
     anchor.href = link;

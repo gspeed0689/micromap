@@ -13,7 +13,7 @@ export class FocusSlider {
     id: string;
     viewer: Viewer;
     scale: d3.ScaleLinear<number, number>;
-    handle: d3.Selection<d3.BaseType,unknown, HTMLElement, any>;
+    handle: d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
 
     constructor(viewer: Viewer, sliderId: string) {
         this.id = sliderId;
