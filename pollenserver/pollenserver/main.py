@@ -6,8 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
+from .exceptions import KeyViolationException
+
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item
+from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -127,29 +129,45 @@ async def post_item(item: ItemBase) -> int:
     repository.add_item(item)
     return 200
 
+@app.get("/studies/")
+async def studies(category_id: str) -> List[Study]:
+    return repository.get_studies(category_id)
 
-@app.post("/get-study-info/")
-async def get_study_info() -> List[str]:
-    return []
+@app.post("/studies/", status_code=201)
+async def post_study(study: Study):
+    try:
+        repository.add_study(study)
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
+    return
+
+@app.get("/samples/")
+async def samples(study_id: str) -> List[Sample]:
+    return repository.get_samples(study_id)
+
+@app.post("/samples/", status_code=201)
+async def post_sample(sample: SampleCreateDTO):
+    try:
+        repository.add_sample(sample)
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
+    return
+
+@app.get("/slides/")
+async def slides(sample_id: str) -> List[Slide]:
+    return repository.get_slides(sample_id)
+
+@app.post("/slides/", status_code=201)
+async def post_slide(slide: SlideCreateDTO):
+    try:
+        repository.add_slide(slide)
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
+    return
+
+#subspecies
+#study post
+#sample get/post
+#slide get/post
 
 
-@app.post("/get-sample-info/")
-async def get_sample_info() -> List[str]:
-    return []
-
-
-@app.post("/get-slide-info/")
-async def get_slide_info() -> List[str]:
-    return []
-
-
-@app.post("/get-slide/")
-async def get_slide() -> Dict:
-    # TODO: return (reference to - lazy loading?) whole-slide image and pollen-locations.
-    return {}
-
-
-@app.post("/get-pollen/")
-async def get_pollen() -> Dict:
-    # TODO: return full-resolution pollen image.
-    return {}

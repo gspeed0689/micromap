@@ -1,12 +1,15 @@
 from typing import List, Dict
 from uuid import UUID, uuid4
 
+import sqlalchemy
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import or_
 from sqlalchemy import create_engine, select
 
-from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, Base
-from .models import ItemBase, CategoryBase, FamilyBase, GenusBase, SpeciesBase
+from .exceptions import KeyViolationException
+
+from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
+from .models import ItemBase, CategoryBase, FamilyBase, GenusBase, SpeciesBase, Study, SampleCreateDTO, SlideCreateDTO
 
 class PostgresqlDataRepository:
     def __init__(self):
@@ -34,10 +37,76 @@ class PostgresqlDataRepository:
                 return session.scalars(select(ORMGenus).order_by(ORMGenus.name)).all()
 
 
-    def get_species(self, genusid: str) -> List[ORMSpecies]:
+    def get_species(self, genus_id: str) -> List[ORMSpecies]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genusid).order_by(ORMSpecies.name)).all()
+            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genus_id).order_by(ORMSpecies.name)).all()
 
+
+    def get_studies(self, category_id: str) -> List[ORMStudy]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMStudy).where(ORMStudy.category_id == category_id)).all()
+
+    def add_study(self, new_study: Study):
+        try:
+            db_item = ORMStudy(
+                id = new_study.id,
+                description = new_study.description,
+                location = new_study.location,
+                remarks = new_study.remarks,
+                category_id = new_study.category_id)
+
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except sqlalchemy.exc.IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
+
+        return
+
+
+
+
+    def get_samples(self, study_id: str) -> List[ORMSample]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMSample).where(ORMSample.study_id == study_id)).all()
+
+    def add_sample(self, new_sample: SampleCreateDTO):
+        try:
+            db_item = ORMSample(
+                id = new_sample.id,
+                description = new_sample.description,
+                location = new_sample.location,
+                age = new_sample.age,
+                remarks = new_sample.remarks,
+                study_id = new_sample.study_id)
+
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except sqlalchemy.exc.IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
+
+        return
+
+    def get_slides(self, sample_id: str) -> List[ORMSlide]:
+        with Session(self.engine) as session:
+            return session.scalars(select(ORMSlide).where(ORMSlide.sample_id == sample_id)).all()
+
+    def add_slide(self, new_slide: SlideCreateDTO):
+        try:
+            db_item = ORMSlide(
+                id = new_slide.id,
+                description = new_slide.description,
+                location = new_slide.location,
+                sample_id = new_slide.sample_id)
+
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except sqlalchemy.exc.IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
+
+        return
 
     def add_category(self, new_category: CategoryBase)-> UUID:
         new_uuid = uuid4()

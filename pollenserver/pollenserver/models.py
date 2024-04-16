@@ -57,6 +57,7 @@ class StudyBase(BaseModel):
     description: Optional[str]
     location: Optional[str]
     remarks: Optional[str]
+    category_id: UUID
 
 class Study(StudyBase):
     id: UUID
@@ -71,12 +72,21 @@ class SampleBase(BaseModel):
     remarks: Optional[str]
     study: StudyBase
 
+class SampleCreateDTO(BaseModel):
+    id: UUID
+    description: Optional[str]
+    location: Optional[str]
+    age: Optional[str]
+    remarks: Optional[str]
+    study_id: UUID
 
 class Sample(SampleBase):
     id: UUID
 
     class Config:
         from_attributes = True
+
+# Slides
 
 class SlideBase(BaseModel):
     description: Optional[str]
@@ -89,6 +99,13 @@ class Slide(SlideBase):
     class Config:
         from_attributes = True
 
+class SlideCreateDTO(BaseModel):
+    id: UUID
+    description: Optional[str]
+    location: Optional[str]
+    sample_id: UUID
+
+# -------------
 
 class ItemBase(BaseModel):
     key_image: str

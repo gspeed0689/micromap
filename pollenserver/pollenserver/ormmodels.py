@@ -73,6 +73,9 @@ class ORMStudy(Base):
     location: Mapped[str] = mapped_column(String, nullable=True)
     remarks: Mapped[str] = mapped_column(String, nullable=True)
 
+    # Reference to the Category that this Study belongs to
+    category_id: Mapped[UUID] = mapped_column(ForeignKey("category.id"), nullable=False)
+
 
 class ORMSample(Base):
     __tablename__ = "sample"
