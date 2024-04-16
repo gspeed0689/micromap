@@ -21,15 +21,15 @@ class PostgresqlDataRepository:
             return session.scalars(select(ORMCategory)).all()
 
 
-    def get_families(self, categoryid: str) -> List[ORMFamily]:
+    def get_families(self, category_id: str) -> List[ORMFamily]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMFamily).where(ORMFamily.category_id == categoryid).order_by(ORMFamily.name)).all()
+            return session.scalars(select(ORMFamily).where(ORMFamily.category_id == category_id).order_by(ORMFamily.name)).all()
 
 
-    def get_genera(self, familyid: str) -> List[ORMGenus]:
+    def get_genera(self, family_id: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
-            if familyid:
-                return session.scalars(select(ORMGenus).where(ORMGenus.family_id == familyid).order_by(ORMGenus.name)).all()
+            if family_id:
+                return session.scalars(select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)).all()
             else:
                 return session.scalars(select(ORMGenus).order_by(ORMGenus.name)).all()
 

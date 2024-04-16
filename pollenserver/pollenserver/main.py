@@ -105,8 +105,8 @@ async def post_family(family: FamilyBase):
 
 
 @app.get("/genera/")
-async def genera(familyid: str) -> List[Genus]:
-    return repository.get_genera(familyid)
+async def genera(family_id: str) -> List[Genus]:
+    return repository.get_genera(family_id)
 
 @app.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
@@ -114,8 +114,8 @@ async def post_genus(genus: GenusBase):
 
 
 @app.get("/species/")
-async def species(generaid: str) -> List[Species]:
-    return repository.get_species(generaid)
+async def species(genera_id: str) -> List[Species]:
+    return repository.get_species(genera_id)
 
 @app.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
