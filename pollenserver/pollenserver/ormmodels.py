@@ -98,7 +98,7 @@ class ORMSlide(Base):
     sample_id: Mapped[UUID] = mapped_column(ForeignKey("sample.id"), nullable=False)
 
     description: Mapped[str] = mapped_column(String, nullable=True)
-    location: Mapped[str] = mapped_column(String, nullable=True)
+    remarks: Mapped[str] = mapped_column(String, nullable=True)
 
     sample: Mapped[ORMSample] = relationship("ORMSample", lazy='subquery')
 

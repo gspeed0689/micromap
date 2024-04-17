@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
 
-from .exceptions import KeyViolationException
+from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
 from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
@@ -96,6 +96,15 @@ async def category() -> List[Category]:
 async def post_category(category: CategoryBase):
     return { "id": repository.add_category(category) }
 
+@app.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
+async def post_category(category: Category):
+    try:
+        repository.update_category(category)
+    except EntityDoesNotExistException:
+        return 404
+    return
+
+
 
 @app.get("/families/")
 async def families(category_id: str) -> List[Family]:
@@ -116,8 +125,11 @@ async def post_genus(genus: GenusBase):
 
 
 @app.get("/species/")
-async def species(genera_id: str) -> List[Species]:
-    return repository.get_species(genera_id)
+async def species(genera_id: Optional[str] = None, category_id: Optional[str] = None) -> List[Species]:
+    if genera_id:
+        return repository.get_species(genera_id)
+    if category_id:
+        return repository.get_species_for_category(category_id)
 
 @app.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):

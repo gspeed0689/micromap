@@ -90,7 +90,7 @@ class Sample(SampleBase):
 
 class SlideBase(BaseModel):
     description: Optional[str]
-    location: Optional[str]
+    remarks: Optional[str]
     sample: SampleBase
 
 class Slide(SlideBase):
@@ -102,7 +102,7 @@ class Slide(SlideBase):
 class SlideCreateDTO(BaseModel):
     id: UUID
     description: Optional[str]
-    location: Optional[str]
+    remarks: Optional[str]
     sample_id: UUID
 
 # -------------
