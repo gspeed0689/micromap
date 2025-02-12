@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemBase, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
+from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
 # Default values. These values can also be set using environment variables.
 class Settings(BaseSettings):
@@ -97,13 +97,12 @@ async def post_category(category: CategoryBase):
     return { "id": repository.add_category(category) }
 
 @app.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
-async def post_category(category: Category):
+async def put_category(category: Category):
     try:
         repository.update_category(category)
     except EntityDoesNotExistException:
         return 404
     return
-
 
 
 @app.get("/families/")
@@ -114,6 +113,15 @@ async def families(category_id: str) -> List[Family]:
 async def post_family(family: FamilyBase):
     return { "id": repository.add_family(family) }
 
+@app.put("/families/", status_code=200, responses = {404: {"description": "Family does not exist"}})
+async def put_family(family: Family):
+    try:
+        repository.update_family(family)
+    except EntityDoesNotExistException:
+        return 404
+    return
+
+
 
 @app.get("/genera/")
 async def genera(family_id: str) -> List[Genus]:
@@ -122,6 +130,14 @@ async def genera(family_id: str) -> List[Genus]:
 @app.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
     return { "id": repository.add_genus(genus) }
+
+@app.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
+async def put_genus(genus: Genus):
+    try:
+        repository.update_genus(genus)
+    except EntityDoesNotExistException:
+        return 404
+    return
 
 
 @app.get("/species/")
@@ -135,9 +151,17 @@ async def species(genera_id: Optional[str] = None, category_id: Optional[str] = 
 async def post_species(species: SpeciesBase):
     return { "id": repository.add_species(species) }
 
+@app.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
+async def put_species(species: Species):
+    try:
+        repository.update_species(species)
+    except EntityDoesNotExistException:
+        return 404
+    return
 
-@app.post("/item/")
-async def post_item(item: ItemBase) -> int:
+
+@app.post("/items/")
+async def post_item(item: ItemCreateDTO) -> int:
     repository.add_item(item)
     return 200
 

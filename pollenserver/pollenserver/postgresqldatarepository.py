@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, select
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
-from .models import ItemBase, CategoryBase, Category, FamilyBase, GenusBase, SpeciesBase, Study, SampleCreateDTO, SlideCreateDTO
+from .models import ItemBase, CategoryBase, Category, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
 
 class PostgresqlDataRepository:
     def __init__(self):
@@ -44,12 +44,33 @@ class PostgresqlDataRepository:
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
 
-
+    # Families
 
     def get_families(self, category_id: str) -> List[ORMFamily]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMFamily).where(ORMFamily.category_id == category_id).order_by(ORMFamily.name)).all()
 
+    def add_family(self, new_family: FamilyBase)-> UUID:
+        new_uuid = uuid4()
+        db_item = ORMFamily(id = new_uuid, name = new_family.name, category_id = new_family.category_id)
+
+        with Session(self.engine) as session:
+            session.add(db_item)
+            session.commit()
+
+        return new_uuid
+
+    def update_family(self, updated_family: Family):
+        with Session(self.engine) as session:
+            try:
+                family = session.scalars(select(ORMFamily).where(ORMFamily.id == updated_family.id)).one()
+                family.name = updated_family.name
+                family.category_id = updated_family.category_id
+                session.commit()
+            except sqlalchemy.exc.NoResultFound:
+                raise EntityDoesNotExistException()
+
+    # Genera
 
     def get_genera(self, family_id: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
@@ -58,11 +79,51 @@ class PostgresqlDataRepository:
             else:
                 return session.scalars(select(ORMGenus).order_by(ORMGenus.name)).all()
 
+    def add_genus(self, new_genus: GenusBase)-> UUID:
+        new_uuid = uuid4()
+        db_item = ORMGenus(id = new_uuid, name = new_genus.name, family_id = new_genus.family_id)
+
+        with Session(self.engine) as session:
+            session.add(db_item)
+            session.commit()
+
+        return new_uuid
+
+    def update_genus(self, updated_genus: Genus):
+        with Session(self.engine) as session:
+            try:
+                genus = session.scalars(select(ORMGenus).where(ORMGenus.id == updated_genus.id)).one()
+                genus.name = updated_genus.name
+                genus.family_id = updated_genus.family_id
+                session.commit()
+            except sqlalchemy.exc.NoResultFound:
+                raise EntityDoesNotExistException()
+
+    # Species
 
     def get_species(self, genus_id: str) -> List[ORMSpecies]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genus_id).order_by(ORMSpecies.name)).all()
 
+    def add_species(self, new_species: SpeciesBase)-> UUID:
+        new_uuid = uuid4()
+        db_item = ORMSpecies(id = new_uuid, name = new_species.name, genus_id = new_species.genus_id)
+
+        with Session(self.engine) as session:
+            session.add(db_item)
+            session.commit()
+
+        return new_uuid
+
+    def update_species(self, updated_species: Species):
+        with Session(self.engine) as session:
+            try:
+                species = session.scalars(select(ORMSpecies).where(ORMSpecies.id == updated_species.id)).one()
+                species.name = updated_species.name
+                species.genus_id = updated_species.genus_id
+                session.commit()
+            except sqlalchemy.exc.NoResultFound:
+                raise EntityDoesNotExistException()
 
     def get_species_for_category(self, category_id: str) -> List[ORMSpecies]:
         with Session(self.engine) as session:
@@ -70,6 +131,7 @@ class PostgresqlDataRepository:
             all_genera = ( select(ORMGenus.id).where(ORMGenus.family_id.in_(all_families)).scalar_subquery() )
             return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id.in_(all_genera)).order_by(ORMSpecies.name)).all()
 
+    # Studies
 
     def get_studies(self, category_id: str) -> List[ORMStudy]:
         with Session(self.engine) as session:
@@ -91,6 +153,7 @@ class PostgresqlDataRepository:
             raise KeyViolationException('IntegrityError', str(e.orig))
         return
 
+    # Samples
 
     def get_samples(self, study_id: str) -> List[ORMSample]:
         with Session(self.engine) as session:
@@ -137,35 +200,11 @@ class PostgresqlDataRepository:
 
 
 
-    def add_family(self, new_family: FamilyBase)-> UUID:
-        new_uuid = uuid4()
-        db_item = ORMFamily(id = new_uuid, name = new_family.name, category_id = new_family.category_id)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
 
-        return new_uuid
 
-    def add_genus(self, new_genus: GenusBase)-> UUID:
-        new_uuid = uuid4()
-        db_item = ORMGenus(id = new_uuid, name = new_genus.name, family_id = new_genus.family_id)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
 
-        return new_uuid
-
-    def add_species(self, new_species: SpeciesBase)-> UUID:
-        new_uuid = uuid4()
-        db_item = ORMSpecies(id = new_uuid, name = new_species.name, genus_id = new_species.genus_id)
-
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
-
-        return new_uuid
 
     def add_item(self, new_item: ItemBase)-> UUID:
         new_uuid = uuid4()

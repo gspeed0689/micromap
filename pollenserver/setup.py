@@ -16,8 +16,9 @@ setuptools.setup(
     install_requires=[
         'fastapi~=0.100.1 ',
         'pydantic~=2.1.1',
+        'pydantic-settings~=2.0.3',
         'sqlalchemy~=2.0.23',
-        'psycopg2~=2.9.9'
+        'psycopg2-binary~=2.9.9'
     ],
     extras_require={
         'asgi webserver': ['uvicorn~=0.20.0'],

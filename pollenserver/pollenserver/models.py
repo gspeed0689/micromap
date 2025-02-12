@@ -119,6 +119,17 @@ class ItemBase(BaseModel):
 
     voxel_width: float = None
 
+class ItemCreateDTO(BaseModel):
+    key_image: str
+    family_id: Optional[UUID] = None
+    genus_id: Optional[UUID] = None
+    species_id: Optional[UUID] = None
+    subspecies_id: Optional[UUID] = None
+    comment: Optional[str] = None
+
+    slide_id: UUID
+
+    voxel_width: float = None
 
 class Item(ItemBase):
     id: UUID
