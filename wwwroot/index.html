@@ -32,9 +32,9 @@
     .grid-container {
       display: grid;
       grid-template-areas:
-        'header header header header header '
-        'main main main main right'
-        'footer footer footer footer footer';
+        'header header'
+        'main right'
+        'footer footer';
     }
 
 
@@ -46,12 +46,13 @@
   <div class="grid-container">
     <div class="item1">
       <div class="header">
-        <h2>Pollen reference database</h2>
+        <h2>MicroMap - Pollen reference database</h2>
       </div>
       <div class="searchbar">
         <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
         <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
         <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
+        <span class="font-bold">Sub-Species :</span> <select class="btn" id="sub-species-select"></select>
       </div>
     </div>
 
@@ -87,7 +88,7 @@
           <span class="panel-header">Slide</span><br>
           <span class="item-header">Description: </span><span id="info-slide-description"
             class="item-contents">-</span><br>
-          <span class="item-header">Location: </span><span id="info-slide-location" class="item-contents">-</span>
+          <span class="item-header">Remarks: </span><span id="info-slide-remarks" class="item-contents">-</span>
         </div>
       </div>
     </div>

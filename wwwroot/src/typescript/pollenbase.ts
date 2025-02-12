@@ -113,8 +113,8 @@ export async function thumbnailSelected(c: string) {
 
    infoSpan = document.getElementById('info-slide-description') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.description
-   infoSpan = document.getElementById('info-slide-location') as HTMLSpanElement;
-   infoSpan.textContent = selectedItem.slide.location;
+   infoSpan = document.getElementById('info-slide-remarks') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.remarks
 
 
   const f: string[] = ['prepared/o_' + c + '/' + c + '_1.png',
