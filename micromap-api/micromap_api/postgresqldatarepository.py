@@ -1,4 +1,5 @@
-from typing import List, Dict
+import os
+from typing import List
 from uuid import UUID, uuid4
 
 import sqlalchemy
@@ -11,10 +12,15 @@ from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
 from .models import ItemBase, CategoryBase, Category, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
 
+
 class PostgresqlDataRepository:
     def __init__(self):
-        self.engine = create_engine("postgresql://postgres:sa@localhost/pollen", echo=True)
-
+        server = os.getenv("PGHOSTADDR", os.getenv("PGHOST", "localhost"))
+        database = os.getenv("PGDATABASE", "micromap")
+        user = os.getenv("PGUSER", "postgres")
+        password = os.getenv("PGPASSWORD", "postgres")
+        port = os.getenv("PGPORT", "5432")
+        self.engine = create_engine(f"postgresql://{user}:{password}@{server}:{port}/{database}", echo=True)
 
     def create_database(self):
         Base.metadata.create_all(self.engine)

@@ -1,18 +1,18 @@
 import setuptools
 
 setuptools.setup(
-    name="pollenserver",
+    name="micromap-api",
     version="0.0.1",
     author="Edwin Bennink",
     author_email="H.E.Bennink@umcutrecht.nl",
-    description="PollenBase API module",
-    packages=['pollenserver'],
+    description="MicroMap API module",
+    packages=['micromap_api'],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: Other/Proprietary License",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Development Status :: 2 - Pre-Alpha"
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     install_requires=[
         'fastapi~=0.100.1 ',
         'pydantic~=2.1.1',

@@ -1,7 +1,6 @@
-from typing import Dict, Optional, List
+from typing import Optional, List
 
 from fastapi import FastAPI, Query, HTTPException
-from fastapi.responses import  JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from pydantic_settings import BaseSettings
