@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
+  <link rel="stylesheet" href="css/pollenbase.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+    integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="dist/bundle.js"></script>
+  <style>
+    .item1 {
+      grid-area: header;
+    }
+
+    .item2 {
+      grid-area: main;
+    }
+
+    .item3 {
+      grid-area: right;
+    }
+
+    .item4 {
+      grid-area: footer;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-areas:
+        'header header'
+        'main right'
+        'footer footer';
+    }
+
+
+  </style>
+</head>
+
+<body>
+
+  <div class="grid-container">
+    <div class="item1">
+      <div class="header">
+        <h2>MicroMap - Pollen reference database</h2>
+      </div>
+      <div class="searchbar">
+        <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
+        <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
+        <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
+        <span class="font-bold">Sub-Species :</span> <select class="btn" id="sub-species-select"></select>
+      </div>
+    </div>
+
+    <div class="item2 wrapper">
+        <div class="image-gallery" id="gallery">
+
+        </div>
+
+    </div>
+    <div class="item3">
+      <div id="viewer-container">
+        No image
+      </div>
+    </div>
+    <div class="item4">
+      <div id="infopanel">
+        <div class="info-sub-panel">
+          <span class="panel-header">Study</span><br>
+          <span class="item-header">Description: </span><span id="info-study-description"
+            class="item-contents">-</span><br>
+          <span class="item-header">Location: </span><span id="info-study-location" class="item-contents">-</span><br>
+          <span class="item-header">Remarks: </span><span id="info-study-remarks" class="item-contents">-</span>
+        </div>
+        <div class="info-sub-panel">
+          <span class="panel-header">Sample</span><br>
+          <span class="item-header">Description: </span><span id="info-sample-description"
+            class="item-contents">-</span><br>
+          <span class="item-header">Location: </span><span id="info-sample-location" class="item-contents">-</span><br>
+          <span class="item-header">Age: </span><span id="info-sample-age" class="item-contents">-</span><br>
+          <span class="item-header">Remarks: </span><span id="info-sample-remarks" class="item-contents">-</span>
+        </div>
+        <div class="info-sub-panel">
+          <span class="panel-header">Slide</span><br>
+          <span class="item-header">Description: </span><span id="info-slide-description"
+            class="item-contents">-</span><br>
+          <span class="item-header">Remarks: </span><span id="info-slide-remarks" class="item-contents">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!--<script src="js/pollenbase.js" ></script>-->
+  <script>
+    var element = document.getElementById('family-select');
+    element.addEventListener("change", function () {
+      PollenBase.onFamilyChange()
+    });
+    element = document.getElementById('genera-select');
+    element.addEventListener("change", function () {
+      PollenBase.onGeneraChange(element)
+    });
+    element = document.getElementById('species-select');
+    element.addEventListener("change", function () {
+      PollenBase.onSpeciesChange(element)
+    });
+
+    PollenBase.populateFamilySelect();
+    PollenBase.onFamilyChange();
+  </script>
+</body>
+
+</html>

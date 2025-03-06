@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header {
+  @apply bg-gradient-to-r from-[#ffcd00] to-transparent;
+  padding: 5px;
+}
+
+h2 {
+  font-size: large;
+  font-weight: bold;
+}
+
+.searchbar {
+  @apply bg-gradient-to-r from-[#fff090] to-transparent;
+  padding: 5px;
+}
+
+.image-gallery {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  order: 1px solid rgb(44, 43, 43);
+  align-content: start;
+}
+
+.image-item img {
+  width: 120px;
+  border-radius: 5px;
+  height: 120px;
+  object-fit: fill;
+}
+
+.wrapper {
+  height: calc(100vh - 435px);
+  overflow-y: scroll;
+}
+
+.info-container {
+  background-color: darkgray;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 200px;
+}
+
+
+.btn {
+  @apply m-1 p-1 bg-green-200 rounded-lg;
+}
+
+#wrapper {
+  display: flex;
+
+  flex-grow: 1;
+}
+
+#infopanel {
+  position: absolute;
+  /*  background-color: #fff090;*/
+  bottom: 0;
+  margin: 2px;
+  /*border: 1px solid green;*/
+  height: 325px;
+  width: 100%;
+}
+
+.info-sub-panel {
+  margin: 2px;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #fff090;
+}
+
+.info-sub-panel>.panel-header {
+  color: rgb(30, 77, 77);
+}
+
+.info-sub-panel>.item-header {
+  color: rgb(26, 56, 56);
+  font-weight: 700;
+  font-size: large;
+  margin-left: 5px;
+}
+
+.info-sub-panel>.item-header {
+  font-weight: 500;
+  font-size: medium;
+}
+
+.info-sub-panel>.item-contents {
+  font-weight: 300;
+  font-size: medium;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,3 +1,7 @@
 .idea
 *.egg-info
 __pycache__
+node_modules/
+/wwwroot/dist
+/wwwroot/src/typescript/client
+/wwwroot/css
