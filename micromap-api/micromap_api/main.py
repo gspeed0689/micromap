@@ -3,20 +3,12 @@ from typing import Optional, List
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
-from pydantic_settings import BaseSettings
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
+from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
-# Default values. These values can also be set using environment variables.
-class Settings(BaseSettings):
-    max_results: int = 100
-    default_order: str = 'abundance'
-
-
-settings = Settings()
 
 cors_origins = [
     "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)

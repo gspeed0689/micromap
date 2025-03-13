@@ -4,8 +4,10 @@ from uuid import UUID, uuid4
 
 import sqlalchemy
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import or_
+from sqlalchemy.sql import select, or_
 from sqlalchemy import create_engine, select
+
+from .models import settings #used to get max_results as defined in .env
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
@@ -238,10 +240,18 @@ class PostgresqlDataRepository:
         return new_uuid
 
     def get_items(self, genus_id: UUID = None, family_id: UUID = None) -> List[ORMItem]:
+        max_limit = settings.max_results
         if genus_id:
             with Session(self.engine) as session:
-                return session.scalars(select(ORMItem).where(ORMItem.genus_id == genus_id)).all()
+                return session.scalars(
+                    select(ORMItem).where(ORMItem.genus_id == genus_id).limit(max_limit)  #limit genus results
+                ).all()
+
         else:
             with Session(self.engine) as session:
-                subq = ( select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery() )
-                return session.scalars(select(ORMItem).where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))).all()
+                subq = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                return session.scalars(
+                    select(ORMItem).where(
+                        or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id)
+                    ).limit(max_limit)  # limit family results
+                ).all()
