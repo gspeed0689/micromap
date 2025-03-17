@@ -262,3 +262,15 @@ class PostgresqlDataRepository:
         random.seed(42)
         random.shuffle(items)  # This is better than sorting with random key
         return items
+
+#Returns a dictionary of genera from capitalized first letter
+#ToDo add a counter
+    def get_genera_by_letter(self, letter: str):
+        """Fetch all genera whose names start with the given letter, ordered alphabetically."""
+        with Session(self.engine) as session:
+            genera = session.scalars(
+                select(ORMGenus)
+                .where(ORMGenus.name.startswith(letter))  # Filter genera by first letter
+                .order_by(ORMGenus.name)  # Order alphabetically
+            ).all()
+        return genera  # Returns a list of ORMGenus objects

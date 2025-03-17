@@ -192,7 +192,16 @@ async def post_slide(slide: SlideCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-#subspecies
+#return genus by capital first letter
+@app.get("/genera/letter/{letter}")
+async def genera_by_letter(letter: str):
+    genera_list = repository.get_genera_by_letter(letter)
+    return [
+        {"id": str(genus.id), "name": genus.name}
+        for genus in genera_list
+    ]
+
+# #subspecies
 #study post
 #sample get/post
 #slide get/post
