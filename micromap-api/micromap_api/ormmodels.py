@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Float
+from sqlalchemy import String, ForeignKey, Float, Boolean
 from uuid import UUID
 from typing import List
 
@@ -72,6 +72,8 @@ class ORMStudy(Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
     location: Mapped[str] = mapped_column(String, nullable=True)
     remarks: Mapped[str] = mapped_column(String, nullable=True)
+    is_reference: Mapped[Boolean] = mapped_column(Boolean, nullable=False) #EDWIN CHECK: SHOULD THIS BE NULLABLE OR NOT?
+
 
     # Reference to the Category that this Study belongs to
     category_id: Mapped[UUID] = mapped_column(ForeignKey("category.id"), nullable=False)

@@ -42,6 +42,7 @@ async def root():
 async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
+                is_include_non_reference_check: bool = Query(default=True),
                 study: Optional[str] = Query(default=None),
                 sample: Optional[str] = Query(default=None),
                 slide: Optional[str] = Query(default=None),
@@ -67,9 +68,9 @@ async def items(family: Optional[str] = Query(default=None),
         # TODO: Search on species level.
         pass
     elif genus:
-        return repository.get_items(genus_id=genus)
+        return repository.get_items(genus_id=genus, include_non_reference =is_include_non_reference_check)
     elif family:
-        return repository.get_items(family_id=family)
+        return repository.get_items(family_id=family, include_non_reference =is_include_non_reference_check)
     else:
         # TODO: Search on database level.
         pass
@@ -192,7 +193,7 @@ async def post_slide(slide: SlideCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-#return genus by capital first letter
+#return GENERA by capital first letter
 @app.get("/genera/letter/{letter}")
 async def genera_by_letter(letter: str):
     genera_list = repository.get_genera_by_letter(letter)
@@ -201,6 +202,12 @@ async def genera_by_letter(letter: str):
         for genus in genera_list
     ]
 
+#return FAMILY by capital first letter
+@app.get("/family/letter/{letter}")
+async def family_by_letter(letter: str):
+    family_list = repository.get_family_by_letter(letter)
+
+    return family_list
 # #subspecies
 #study post
 #sample get/post
