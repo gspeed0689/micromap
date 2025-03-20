@@ -122,3 +122,4 @@ class ORMItem(Base):
     slide: Mapped["ORMSlide"] = relationship("ORMSlide", lazy='subquery')
 
     voxel_width: Mapped[float] = mapped_column(Float, nullable=False)
+

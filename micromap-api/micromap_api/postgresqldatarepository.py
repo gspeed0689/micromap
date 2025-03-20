@@ -300,7 +300,23 @@ class PostgresqlDataRepository:
             ).all()
         return genera  # Returns a list of ORMGenus objects
 
-#Return a list of family by letter. Used for alphabetical search
+        # for the dashboard summary: Part 1 is a test to show species count
+    #species count
+    def get_species_count(self) -> int:  # Add 'self'
+        with Session(self.engine) as session:
+            return session.scalar(select(func.count()).select_from(ORMSpecies))
+
+    #genera count
+    def get_genera_count(self) -> int:  # Add 'self'
+        with Session(self.engine) as session:
+            return session.scalar(select(func.count()).select_from(ORMGenus))
+
+    #family count
+    def get_family_count(self) -> int:  # Add 'self'
+        with Session(self.engine) as session:
+            return session.scalar(select(func.count()).select_from(ORMFamily))
+
+    #Return a list of family by letter. Used for alphabetical search
     def get_family_by_letter(self, letter: str):
         """Fetch families whose names start with the given letter, along with genus count."""
         with Session(self.engine) as session:
@@ -337,3 +353,4 @@ class PostgresqlDataRepository:
                 })
 
         return family_data
+

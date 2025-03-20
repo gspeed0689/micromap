@@ -208,6 +208,25 @@ async def family_by_letter(letter: str):
     family_list = repository.get_family_by_letter(letter)
 
     return family_list
+
+#Dashbaord test
+
+#Family
+@app.get("/get_family_count/")
+async def get_family_count_endpoint():
+    num =  repository.get_family_count()
+    return {"family_count": num}
+#Genera
+@app.get("/get_genera_count/")
+async def get_genera_count_endpoint():
+    num =  repository.get_genera_count()
+    return {"Genera": num}
+
+#Species
+@app.get("/get_species_count/")
+async def get_species_count_endpoint():
+    num =  repository.get_species_count()
+    return {"species_count": num}
 # #subspecies
 #study post
 #sample get/post
