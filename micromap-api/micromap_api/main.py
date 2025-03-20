@@ -3,20 +3,12 @@ from typing import Optional, List
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
-from pydantic_settings import BaseSettings
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
+from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
-# Default values. These values can also be set using environment variables.
-class Settings(BaseSettings):
-    max_results: int = 100
-    default_order: str = 'abundance'
-
-
-settings = Settings()
 
 cors_origins = [
     "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)
@@ -50,6 +42,7 @@ async def root():
 async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
+                is_include_non_reference_check: bool = Query(default=True),
                 study: Optional[str] = Query(default=None),
                 sample: Optional[str] = Query(default=None),
                 slide: Optional[str] = Query(default=None),
@@ -75,9 +68,9 @@ async def items(family: Optional[str] = Query(default=None),
         # TODO: Search on species level.
         pass
     elif genus:
-        return repository.get_items(genus_id=genus)
+        return repository.get_items(genus_id=genus, include_non_reference =is_include_non_reference_check)
     elif family:
-        return repository.get_items(family_id=family)
+        return repository.get_items(family_id=family, include_non_reference =is_include_non_reference_check)
     else:
         # TODO: Search on database level.
         pass
@@ -200,7 +193,22 @@ async def post_slide(slide: SlideCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-#subspecies
+#return GENERA by capital first letter
+@app.get("/genera/letter/{letter}")
+async def genera_by_letter(letter: str):
+    genera_list = repository.get_genera_by_letter(letter)
+    return [
+        {"id": str(genus.id), "name": genus.name}
+        for genus in genera_list
+    ]
+
+#return FAMILY by capital first letter
+@app.get("/family/letter/{letter}")
+async def family_by_letter(letter: str):
+    family_list = repository.get_family_by_letter(letter)
+
+    return family_list
+# #subspecies
 #study post
 #sample get/post
 #slide get/post

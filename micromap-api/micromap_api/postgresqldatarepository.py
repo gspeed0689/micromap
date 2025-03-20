@@ -4,13 +4,16 @@ from uuid import UUID, uuid4
 
 import sqlalchemy
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import or_
-from sqlalchemy import create_engine, select
+from sqlalchemy.sql import select, or_
+from sqlalchemy import create_engine, select, func
+
+from .models import settings #used to get max_results as defined in .env
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
 from .models import ItemBase, CategoryBase, Category, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
+import random # to randomise family and genus queries
 
 
 class PostgresqlDataRepository:
@@ -237,11 +240,100 @@ class PostgresqlDataRepository:
 
         return new_uuid
 
-    def get_items(self, genus_id: UUID = None, family_id: UUID = None) -> List[ORMItem]:
-        if genus_id:
+    def get_items(self, genus_id: UUID = None, include_non_reference: bool = True  , family_id: UUID = None) -> List[ORMItem]:
+        max_limit = settings.max_results
+
+        #add a condition, if: Exclude non-reference then non-reference is not selected
+        if include_non_reference == True:             #No filtering of non-reference material
             with Session(self.engine) as session:
-                return session.scalars(select(ORMItem).where(ORMItem.genus_id == genus_id)).all()
-        else:
+                if genus_id:
+                    items = session.scalars(
+                        select(ORMItem)
+                        .where(ORMItem.genus_id == genus_id)
+                        .limit(max_limit) #limit results
+                    ).all()
+                else:
+                    subq = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    items = session.scalars(
+                        select(ORMItem)
+                        .where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))
+                        .limit(max_limit) #limit results
+                    ).all()
+        else:                                               #exclude all non-reference
             with Session(self.engine) as session:
-                subq = ( select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery() )
-                return session.scalars(select(ORMItem).where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))).all()
+                if genus_id:
+                    items = session.scalars(
+                        select(ORMItem) #need to join slide to item to study
+                        .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
+                        .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
+                        .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
+                        .where(ORMStudy.is_reference == True)
+                        .where(ORMItem.genus_id == genus_id)
+                        .limit(max_limit) #limit results
+                    ).all()
+                else:
+                    subq = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    items = session.scalars(
+                        select(ORMItem)
+                        .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
+                        .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
+                        .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
+                        .where(ORMStudy.is_reference== True)
+                        .where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))
+                        .limit(max_limit) #limit
+                    ).all()
+
+
+        #Randomize order before returning
+        random.seed(42)
+        random.shuffle(items)  # This is better than sorting with random key
+        return items
+
+#Returns a dictionary of genera from capitalized. Used to for alphabetical search
+    def get_genera_by_letter(self, letter: str):
+        """Fetch all genera whose names start with the given letter, ordered alphabetically."""
+        with Session(self.engine) as session:
+            genera = session.scalars(
+                select(ORMGenus)
+                .where(ORMGenus.name.startswith(letter))  # Filter genera by first letter
+                .order_by(ORMGenus.name)  # Order alphabetically
+            ).all()
+        return genera  # Returns a list of ORMGenus objects
+
+#Return a list of family by letter. Used for alphabetical search
+    def get_family_by_letter(self, letter: str):
+        """Fetch families whose names start with the given letter, along with genus count."""
+        with Session(self.engine) as session:
+            families = session.scalars(
+                select(ORMFamily)
+                .where(func.lower(ORMFamily.name).startswith(letter.lower()))  # Case-insensitive filter
+                .order_by(ORMFamily.name)
+            ).all()
+
+            family_data = []
+            for family in families:
+                # Count genera linked to this family
+                genus_count = session.execute(
+                    select(func.count(ORMGenus.id))
+                    .where(ORMGenus.family_id == family.id)
+                ).scalar_one()  # Get integer result
+
+                # Count items linked either directly to family OR indirectly via genus
+                item_count = session.execute(
+                    select(func.count(ORMItem.id))
+                    .where(
+                        (ORMItem.family_id == family.id) |
+                        (ORMItem.genus_id.in_(
+                            select(ORMGenus.id).where(ORMGenus.family_id == family.id)
+                        ))
+                    )
+                ).scalar_one()
+
+                family_data.append({
+                    "id": str(family.id),
+                    "name": family.name,
+                    "genus_count": genus_count,  # Count of genera in this family
+                    "item_count": item_count  # Count of items linked to this family
+                })
+
+        return family_data
