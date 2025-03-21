@@ -54,21 +54,42 @@ The endpoint /docs, e.g. `http://localhost:8000/docs` should show the OpenAPI do
 
 ## Website
 
-Compile the typescript source files to their javascript equivalent:
+### Install npm
+Compiling the source code for the website requires the node package manager (npm) and build tools.
 
-Run
-
-```bash
-npx tsc
+In Windows, the node version manager npv can be installed using [Chocolatey](https://chocolatey.org/):
+```shell
+choco install nvm
 ```
-in the wwwroot directory
-
-### Tailwindcss
-
-See https://tailwindcss.com/docs/installation for installation.
-
-To compile run
-```bash
-npx tailwindcss -i ./src/style.css -o ./css/pollenbase.css
+Then restart the shell and install and activate the latest npm version:
+```shell
+nvm install latest
+nvm use latest
 ```
-in the wwwroot directory. You can add **--watch** to hot rebuild based on changes in the html and typescript files.
+
+### Install dependencies
+To install all dependencies defined in `package.json`, run this command from the `wwwroot` directory:
+```shell
+npm install
+```
+
+### Generate the OpenAPI client module
+An [axios](https://axios-http.com/) client should be generated using the command below (run from the `wwwroot` directory). In case the Micromap API is changed, the client should be re-generated.
+*Note: This requires a running micromap_api webserver. See above.*
+```shell
+npm run generate-client
+```
+
+### Generate CSS
+To compile the tailwind-annotated css, run this command in the `wwwroot` directory: 
+```bash
+npx tailwindcss -i ./src/css/style.css -o ./css/pollenbase.css
+```
+*You can add **--watch** to hot rebuild based on changes in the source files.*
+
+### Compile the client module
+To compile the typescript source files to a javascript bundle, run this command in the `wwwroot` directory:
+```bash
+npx webpack
+```
+*You can add **--watch** to hot rebuild based on changes in the source files.*
