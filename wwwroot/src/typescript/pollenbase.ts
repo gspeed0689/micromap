@@ -129,37 +129,50 @@ export async function thumbnailSelected(c: string) {
   const scaleBar = new ScaleBar(viewer, "#viewer-scalebar", selectedItem.voxel_width);
 }
 
-async function showThumbnails(genus_id: string, family_id: string) {
-  if (families == null)
-    families = await DefaultService.families(CATALOGID);
+async function showThumbnails(genus_id: string | null, family_id: string | null) {
+  if (!families) families = await DefaultService.families(CATALOGID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
-    gallery.firstChild.remove()
+    gallery.firstChild.remove();
   }
 
-  if (genus_id != null) {
-    currentItems = await DefaultService.items(null, genus_id);
-  }
-  else {
-    console.log('genus = all')
-    currentItems = await DefaultService.items(family_id, null);
-  }
+  // Ensure checkbox exists before accessing `.checked`
+  const checkbox = document.getElementById('includeNonReference') as HTMLInputElement | null;
+  const includeNonReference = checkbox ? checkbox.checked : true; //
 
-  for (const item of currentItems) {
-    console.log(item);
-    const newDiv = document.createElement('div');
-    newDiv.className = 'image-item';
-    //const family = families.find((family) => family.id === item.family_id);
-    //newDiv.title = family.name;
-    const anchor = document.createElement('a');
-    const link = "javascript:PollenBase.thumbnailSelected('" + item.id + "')";
-    anchor.href = link;
+  console.log(
+    `Fetching items for ${genus_id ? "genus" : "family"}: ${genus_id || family_id}, Include Non-Reference: ${includeNonReference}`
+  );
 
-    const img = document.createElement('img');
-    img.src = "data:image/png;base64," + item.key_image;
-    anchor.appendChild(img);
-    newDiv.appendChild(anchor);
-    gallery.appendChild(newDiv);
+  try {
+    if (genus_id) {
+      currentItems = await DefaultService.items(null, genus_id, null, includeNonReference);
+    } else {
+      currentItems = await DefaultService.items(family_id, null, null, includeNonReference);
+    }
+
+    if (!currentItems || currentItems.length === 0) {
+      console.warn("No items found for the selected filters.");
+      return;
+    }
+
+    for (const item of currentItems) {
+      console.log("Rendering item:", item);
+
+      const newDiv = document.createElement('div');
+      newDiv.className = 'image-item';
+
+      const anchor = document.createElement('a');
+      anchor.href = `javascript:PollenBase.thumbnailSelected('${item.id}')`;
+
+      const img = document.createElement('img');
+      img.src = `data:image/png;base64,${item.key_image}`;
+      anchor.appendChild(img);
+      newDiv.appendChild(anchor);
+      gallery.appendChild(newDiv);
+    }
+  } catch (error) {
+    console.error("Error fetching thumbnails:", error);
   }
 }

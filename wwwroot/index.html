@@ -46,15 +46,51 @@
   <div class="grid-container">
     <div class="item1">
       <div class="header">
-        <h2>MicroMap - Pollen reference database</h2>
+         <div style="display: flex; align-items: center;">
+          <label>
+            <input type="checkbox" id="includeNonReference" checked> Include Non-Reference Material
+
+          </label>
+          <!-- Database Summary next to the checkbox -->
+          <div class="alphabetical-search" style="margin-left: 10px;">
+            <button class="btn" id="toggle-ribbon" >Go to Alphabetical Genera Search</button>
+          </div>
+        </div>
+
+
+        <!-- Alphabetical Search Button -->
+        <!-- Alphabetical Search Button remains in place -->
+      <div class="database-summary">
+        <a href="file:///C:/dev/umc/wwwroot/database_summary_page.html">
+          <button class="btn" id="toggle-ribbon">Summary of pollendatabase</button>
+        </a>
       </div>
+
+
+
       <div class="searchbar">
         <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
         <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
         <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
         <span class="font-bold">Sub-Species :</span> <select class="btn" id="sub-species-select"></select>
       </div>
+
+      <!-- Alphabetical Search Ribbon (Hidden by Default) -->
+      <div id="alphabet-ribbon" class="alphabet-ribbon">
+        <span class="letter">A</span> <span class="letter">B</span> <span class="letter">C</span>
+        <span class="letter">D</span> <span class="letter">E</span> <span class="letter">F</span>
+        <span class="letter">G</span> <span class="letter">H</span> <span class="letter">I</span>
+        <span class="letter">J</span> <span class="letter">K</span> <span class="letter">L</span>
+        <span class="letter">M</span> <span class="letter">N</span> <span class="letter">O</span>
+        <span class="letter">P</span> <span class="letter">Q</span> <span class="letter">R</span>
+        <span class="letter">S</span> <span class="letter">T</span> <span class="letter">U</span>
+        <span class="letter">V</span> <span class="letter">W</span> <span class="letter">X</span>
+        <span class="letter">Y</span> <span class="letter">Z</span>
+      </div>
     </div>
+  </div>
+
+
 
     <div class="item2 wrapper">
         <div class="image-gallery" id="gallery">
@@ -112,6 +148,24 @@
 
     PollenBase.populateFamilySelect();
     PollenBase.onFamilyChange();
+
+    <!--<Alpabetical search option>-->
+     document.getElementById("toggle-ribbon").addEventListener("click", function () {
+    var ribbon = document.getElementById("alphabet-ribbon");
+    var dropdowns = document.querySelector(".searchbar");
+
+    if (ribbon.style.display === "none" || ribbon.style.display === "") {
+      ribbon.style.display = "block";
+      dropdowns.style.display = "none";
+    } else {
+      ribbon.style.display = "none";
+      dropdowns.style.display = "block";
+    }
+  });
+
+  // Hide the ribbon by default
+  document.getElementById("alphabet-ribbon").style.display = "none";
+
   </script>
 </body>
 
