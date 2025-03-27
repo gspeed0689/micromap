@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--.These links are required for DataTables to work.-->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css" />
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.13.6/features/alphabetSearch/dataTables.alphabetSearch.min.js"></script>
+
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
+  <link rel="stylesheet" href="css/pollenbase.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+    integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="dist/bundle.js"></script>
+  <style>
+    .item1 {
+      grid-area: header;
+    }
+
+    .item2 {
+      grid-area: main;
+    }
+
+    .item3 {
+      grid-area: right;
+    }
+
+    .item4 {
+      grid-area: footer;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-areas:
+        'header header'
+        'main right'
+        'footer footer';
+    }
+
+
+  </style>
+</head>
+
+<body>
+
+
+ <div class="grid-container">
+    <div class="item1">
+      <div class="header">
+
+          </div>
+        </div>
+<p>Micromap is a tool developed in join collaboartion with the Physical Geography department Utrecht University and the Image Analysis Deparrtment at UMC. </p>
+
+  <p> Current database Figures</p>
+
+ <p> Current there are  TODO: LINK TO CONUT_SPECIES API CALL</p>
+
+     <table id="genus-table" class="display">
+
+
+     <!--.Template for Datatable.-->
+  <thead>
+    <tr>
+      <th>Genus</th>
+      <th>Family</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+</body>
+
+</html>

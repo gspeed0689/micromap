@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -113,11 +113,17 @@ async def put_family(family: Family):
         return 404
     return
 
-
-
+#get Genera for drop down
 @app.get("/genera/")
 async def genera(family_id: str) -> List[Genus]:
     return repository.get_genera(family_id)
+
+
+#made family ID optional. Test for DataTable functionality
+@app.get("/genera_for_alphabetical/")
+def get_genera_for_alphabetica():
+    data = repository.get_all_genera()  # No need for 'self'
+    return data
 
 @app.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):

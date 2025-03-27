@@ -2,6 +2,10 @@ import { DefaultService, OpenAPI, Item, Family } from './client';
 import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
+import "datatables.net";
+import $ from "jquery";
+
+
 
 OpenAPI.BASE = 'http://localhost:8000';
 const CATALOGID = 'b788163e-cc97-4333-85f0-f7de210fe416';
@@ -129,6 +133,8 @@ export async function thumbnailSelected(c: string) {
   const scaleBar = new ScaleBar(viewer, "#viewer-scalebar", selectedItem.voxel_width);
 }
 
+
+
 async function showThumbnails(genus_id: string | null, family_id: string | null) {
   if (!families) families = await DefaultService.families(CATALOGID);
 
@@ -136,6 +142,8 @@ async function showThumbnails(genus_id: string | null, family_id: string | null)
   while (gallery.firstChild) {
     gallery.firstChild.remove();
   }
+
+
 
   // Ensure checkbox exists before accessing `.checked`
   const checkbox = document.getElementById('includeNonReference') as HTMLInputElement | null;
@@ -176,3 +184,43 @@ async function showThumbnails(genus_id: string | null, family_id: string | null)
     console.error("Error fetching thumbnails:", error);
   }
 }
+
+//add DataTable
+$(document).ready(function () {
+  // Initialize DataTable
+  const table = $('#genus-table').DataTable({
+    paging: true,   // Enable pagination
+    searching: true, // Enable search
+    info: true,      // Show table info
+    columns: [
+      { title: "Family", data: "family_name" },
+      { title: "Genus", data: "genus_name" },
+    ]
+  });
+
+  // Now, fetch genera data asynchronously
+  async function fetchGenera() {
+    try {
+      const url = `http://localhost:8000/genera_for_alphabetical/`; // Fetch all genera
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch genera data');
+      }
+
+      // Convert response to JSON
+      const genera = await response.json();
+
+      // Clear current rows and add the new data to the table
+      table.clear().rows.add(genera).draw();
+    } catch (error) {
+      console.error("Error fetching genera:", error);
+    }
+  }
+
+  // Fetch genera data once the table is ready
+  fetchGenera();  // Fetch and populate the table when the page loads
+});
+
+// Fetch and populate data from FastAPI
+

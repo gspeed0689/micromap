@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Dict
 from uuid import UUID, uuid4
 
 import sqlalchemy
@@ -316,6 +316,18 @@ class PostgresqlDataRepository:
         with Session(self.engine) as session:
             return session.scalar(select(func.count()).select_from(ORMFamily))
 
+    def get_all_genera(self):
+        with Session(self.engine) as session:
+            s = select(ORMGenus.name, ORMFamily.name).join(
+                ORMFamily, ORMGenus.family_id == ORMFamily.id
+            )
+            r = session.execute(s).all()
+            genera = [{"genus_name": genus, "family_name": family} for genus, family in r]
+            return genera
+
+
+        return [{"genus_name": row[0], "family_name": row[1]} for row in r]
+
     #Return a list of family by letter. Used for alphabetical search
     def get_family_by_letter(self, letter: str):
         """Fetch families whose names start with the given letter, along with genus count."""
@@ -353,4 +365,6 @@ class PostgresqlDataRepository:
                 })
 
         return family_data
+
+
 
