@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import select, or_
 from sqlalchemy import create_engine, select, func
 
+
 from .models import settings #used to get max_results as defined in .env
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
@@ -208,13 +209,6 @@ class PostgresqlDataRepository:
 
 
 
-
-
-
-
-
-
-
     def add_item(self, new_item: ItemBase)-> UUID:
         new_uuid = uuid4()
         db_item = ORMItem(
@@ -239,47 +233,71 @@ class PostgresqlDataRepository:
             session.commit()
 
         return new_uuid
+#this function works by input. If family is slected, genus, family and species is retuned
+#if genera is selected,  family and genus are returned
+#if species is selcted only species is returned.
 
-    def get_items(self, genus_id: UUID = None, include_non_reference: bool = True  , family_id: UUID = None) -> List[ORMItem]:
+#subqueries are used to accomadate the database structure.
+    def get_items(self, species_id = None, genus_id: UUID = None, include_non_reference: bool = True  , family_id: UUID = None ) -> List[ORMItem]:
         max_limit = settings.max_results
 
         #add a condition, if: Exclude non-reference then non-reference is not selected
         if include_non_reference == True:             #No filtering of non-reference material
             with Session(self.engine) as session:
-                if genus_id:
+                if species_id:
                     items = session.scalars(
                         select(ORMItem)
-                        .where(ORMItem.genus_id == genus_id)
+                        .where(ORMItem.species_id == species_id)
+                        .limit(max_limit)  # limit results
+                    ).all()
+                elif genus_id:
+                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                    items = session.scalars(
+                        select(ORMItem)
+                        .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
                         .limit(max_limit) #limit results
                     ).all()
-                else:
-                    subq = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                elif family_id:
+                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
                     items = session.scalars(
                         select(ORMItem)
-                        .where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))
+                        .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
                         .limit(max_limit) #limit results
                     ).all()
         else:                                               #exclude all non-reference
             with Session(self.engine) as session:
-                if genus_id:
+                if species_id:
+                    items = session.scalars(
+                        select(ORMItem)  # need to join slide to item to study
+                        .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
+                        .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
+                        .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
+                        .where(ORMStudy.is_reference == True)
+                        .where(ORMItem.species_id == species_id)
+                        .limit(max_limit)  # limit results
+                    ).all()
+                elif genus_id:
+                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
                     items = session.scalars(
                         select(ORMItem) #need to join slide to item to study
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
                         .where(ORMStudy.is_reference == True)
-                        .where(ORMItem.genus_id == genus_id)
+                        .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
                         .limit(max_limit) #limit results
                     ).all()
-                else:
-                    subq = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                elif family_id:
+                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
                     items = session.scalars(
                         select(ORMItem)
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
                         .where(ORMStudy.is_reference== True)
-                        .where(or_(ORMItem.genus_id.in_(subq), ORMItem.family_id == family_id))
+                        .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
                         .limit(max_limit) #limit
                     ).all()
 
@@ -289,16 +307,33 @@ class PostgresqlDataRepository:
         random.shuffle(items)  # This is better than sorting with random key
         return items
 
-#Returns a dictionary of genera from capitalized. Used to for alphabetical search
+        """Fetch all genera whose names start with the given letter, along with family ID and name, ordered alphabetically."""
+
     def get_genera_by_letter(self, letter: str):
-        """Fetch all genera whose names start with the given letter, ordered alphabetically."""
+        """Fetch all genera whose names start with the given letter, including family ID and name, ordered alphabetically."""
         with Session(self.engine) as session:
-            genera = session.scalars(
-                select(ORMGenus)
-                .where(ORMGenus.name.startswith(letter))  # Filter genera by first letter
-                .order_by(ORMGenus.name)  # Order alphabetically
-            ).all()
-        return genera  # Returns a list of ORMGenus objects
+            genera = session.execute(
+                select(
+                    ORMGenus.id,  #
+                    ORMGenus.name,
+                    ORMFamily.id,  #
+                    ORMFamily.name).join(
+                    ORMFamily, ORMGenus.family_id == ORMFamily.id
+                )
+                .where(ORMGenus.name.startswith(letter))
+                .order_by(ORMGenus.name)
+            ).all()  # Returns a list of tuples
+
+        # Convert list of tuples to list of dictionaries
+        # Convert list of tuples to list of dictionaries
+        genera_dicts = [{
+            'genus_id': genus_id,
+            'genus_name': genus_name,
+            'family_id': family_id,
+            'family_name': family_name
+        } for genus_id, genus_name, family_id, family_name in genera]
+
+        return genera_dicts
 
         # for the dashboard summary: Part 1 is a test to show species count
     #species count
@@ -316,17 +351,6 @@ class PostgresqlDataRepository:
         with Session(self.engine) as session:
             return session.scalar(select(func.count()).select_from(ORMFamily))
 
-    def get_all_genera(self):
-        with Session(self.engine) as session:
-            s = select(ORMGenus.name, ORMFamily.name).join(
-                ORMFamily, ORMGenus.family_id == ORMFamily.id
-            )
-            r = session.execute(s).all()
-            genera = [{"genus_name": genus, "family_name": family} for genus, family in r]
-            return genera
-
-
-        return [{"genus_name": row[0], "family_name": row[1]} for row in r]
 
     #Return a list of family by letter. Used for alphabetical search
     def get_family_by_letter(self, letter: str):

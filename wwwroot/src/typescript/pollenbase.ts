@@ -2,8 +2,6 @@ import { DefaultService, OpenAPI, Item, Family } from './client';
 import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
-import "datatables.net";
-import $ from "jquery";
 
 
 
@@ -49,12 +47,12 @@ export function onGeneraChange() {
   const selectedGenus = generaSelectBox.value;
   if (selectedGenus != '__ALL__') {
     populateSpeciesSelect(selectedGenus)
-    showThumbnails(selectedGenus, null);
+    showThumbnails(null, selectedGenus, null);
   }
   else {
     console.log('all genusses')
     const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-    showThumbnails(null, familySelectBox.value);
+    showThumbnails(null, null, familySelectBox.value);
   }
 }
 
@@ -74,10 +72,6 @@ async function populateGeneraSelect(familyid: string) {
 }
 
 async function populateSpeciesSelect(generaid: string) {
-  return;
-  if (generaid == null)
-    return;
-
   const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
   while (speciesSelectBox.firstChild) {
     speciesSelectBox.firstChild.remove()
@@ -93,8 +87,10 @@ async function populateSpeciesSelect(generaid: string) {
 
 export function onSpeciesChange() {
   const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
-  showThumbnails(speciesSelectBox.value, null);
+  showThumbnails(speciesSelectBox.value, null, null);
 }
+
+
 
 export async function thumbnailSelected(c: string) {
   const selectedItem = currentItems.find((element) => element.id === c);
@@ -135,7 +131,7 @@ export async function thumbnailSelected(c: string) {
 
 
 
-async function showThumbnails(genus_id: string | null, family_id: string | null) {
+async function showThumbnails(species_id: string | null, genus_id: string | null, family_id: string | null) {
   if (!families) families = await DefaultService.families(CATALOGID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
@@ -153,12 +149,14 @@ async function showThumbnails(genus_id: string | null, family_id: string | null)
     `Fetching items for ${genus_id ? "genus" : "family"}: ${genus_id || family_id}, Include Non-Reference: ${includeNonReference}`
   );
 
-  try {
-    if (genus_id) {
-      currentItems = await DefaultService.items(null, genus_id, null, includeNonReference);
-    } else {
-      currentItems = await DefaultService.items(family_id, null, null, includeNonReference);
-    }
+ try {
+  if (species_id) {
+    currentItems = await DefaultService.items(null, null, species_id, includeNonReference);
+  } else if (genus_id) {
+    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference);
+  } else {
+    currentItems = await DefaultService.items(family_id, null, null, includeNonReference);
+  }
 
     if (!currentItems || currentItems.length === 0) {
       console.warn("No items found for the selected filters.");
@@ -185,42 +183,48 @@ async function showThumbnails(genus_id: string | null, family_id: string | null)
   }
 }
 
-//add DataTable
-$(document).ready(function () {
-  // Initialize DataTable
-  const table = $('#genus-table').DataTable({
-    paging: true,   // Enable pagination
-    searching: true, // Enable search
-    info: true,      // Show table info
-    columns: [
-      { title: "Family", data: "family_name" },
-      { title: "Genus", data: "genus_name" },
-    ]
-  });
+// add a box that returns the  get genera_by_letter function and place it within a box
+document.addEventListener("DOMContentLoaded", () => {
+  const alphabetFilter = document.getElementById("alphabet-filter");
+  const resultsBox = document.createElement("div");
+  resultsBox.id = "results-box";
+  resultsBox.className = "results-box";
+  document.body.appendChild(resultsBox);
 
-  // Now, fetch genera data asynchronously
-  async function fetchGenera() {
-    try {
-      const url = `http://localhost:8000/genera_for_alphabetical/`; // Fetch all genera
-      const response = await fetch(url);
+  if (alphabetFilter) {
+    alphabetFilter.addEventListener("click", async (event) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === "BUTTON") {
+        const letter = target.getAttribute("data-letter");
+        if (!letter) return;
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch genera data');
+        console.log(`Fetching genera for letter: ${letter}`);
+
+        try {
+          // Use DefaultService instead of fetch()
+          const genera = await DefaultService.generaByLetter(letter);
+
+          resultsBox.innerHTML = ""; // Clear previous results
+          if (!genera || genera.length === 0) {
+            console.warn("No genera found.");
+            resultsBox.innerHTML = "<p>No genera found.</p>";
+            return;
+          }
+
+          const list = document.createElement("ul");
+          genera.forEach((genus: { genus_name: string; family_name: string }) => {
+           const li = document.createElement("li");
+           li.innerHTML = `${genus.genus_name} <br> <span class="family-name">(${genus.family_name})</span>`;
+           list.appendChild(li);
+        });
+
+
+          resultsBox.appendChild(list);
+        } catch (error) {
+          console.error("Error fetching genera:", error);
+        }
       }
-
-      // Convert response to JSON
-      const genera = await response.json();
-
-      // Clear current rows and add the new data to the table
-      table.clear().rows.add(genera).draw();
-    } catch (error) {
-      console.error("Error fetching genera:", error);
-    }
+    });
   }
-
-  // Fetch genera data once the table is ready
-  fetchGenera();  // Fetch and populate the table when the page loads
 });
-
-// Fetch and populate data from FastAPI
 

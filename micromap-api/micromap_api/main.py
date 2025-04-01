@@ -65,7 +65,7 @@ async def items(family: Optional[str] = Query(default=None),
 
     print('/items', family, genus)
     if species:
-        # TODO: Search on species level.
+        return repository.get_items(species_id=species, include_non_reference=is_include_non_reference_check)
         pass
     elif genus:
         return repository.get_items(genus_id=genus, include_non_reference =is_include_non_reference_check)
@@ -203,10 +203,7 @@ async def post_slide(slide: SlideCreateDTO):
 @app.get("/genera/letter/{letter}")
 async def genera_by_letter(letter: str):
     genera_list = repository.get_genera_by_letter(letter)
-    return [
-        {"id": str(genus.id), "name": genus.name}
-        for genus in genera_list
-    ]
+    return genera_list
 
 #return FAMILY by capital first letter
 @app.get("/family/letter/{letter}")

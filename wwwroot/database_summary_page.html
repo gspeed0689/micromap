@@ -4,8 +4,6 @@
 <!--.These links are required for DataTables to work.-->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css" />
-<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.13.6/features/alphabetSearch/dataTables.alphabetSearch.min.js"></script>
 
 
 <head>
@@ -49,32 +47,42 @@
 </head>
 
 <body>
+<div id="alphabet-filter" class="alphabet-filter">
+  <button data-letter="A">A</button>
+  <button data-letter="B">B</button>
+  <button data-letter="C">C</button>
+  <button data-letter="D">D</button>
+  <button data-letter="E">E</button>
+  <button data-letter="F">F</button>
+  <button data-letter="G">G</button>
+  <button data-letter="H">H</button>
+  <button data-letter="I">I</button>
+  <button data-letter="J">J</button>
+  <button data-letter="K">K</button>
+  <button data-letter="L">L</button>
+  <button data-letter="M">M</button>
+  <button data-letter="N">N</button>
+  <button data-letter="O">O</button>
+  <button data-letter="P">P</button>
+  <button data-letter="Q">Q</button>
+  <button data-letter="R">R</button>
+  <button data-letter="S">S</button>
+  <button data-letter="T">T</button>
+  <button data-letter="U">U</button>
+  <button data-letter="V">V</button>
+  <button data-letter="W">W</button>
+  <button data-letter="X">X</button>
+  <button data-letter="Y">Y</button>
+  <button data-letter="Z">Z</button>
+</div>
 
 
- <div class="grid-container">
-    <div class="item1">
-      <div class="header">
 
-          </div>
-        </div>
-<p>Micromap is a tool developed in join collaboartion with the Physical Geography department Utrecht University and the Image Analysis Deparrtment at UMC. </p>
-
-  <p> Current database Figures</p>
-
- <p> Current there are  TODO: LINK TO CONUT_SPECIES API CALL</p>
-
-     <table id="genus-table" class="display">
+<div class = "results-box">
 
 
-     <!--.Template for Datatable.-->
-  <thead>
-    <tr>
-      <th>Genus</th>
-      <th>Family</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+
+
 
 
 </body>
