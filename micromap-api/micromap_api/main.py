@@ -115,7 +115,7 @@ async def put_family(family: Family):
 
 #get Genera for drop down
 @app.get("/genera/")
-async def genera(family_id: str) -> List[Genus]:
+async def genera(family_id: str) -> List[Dict]:
     return repository.get_genera(family_id)
 
 

@@ -80,14 +80,33 @@ class PostgresqlDataRepository:
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
 
-    # Genera
 
+    #modify existing get ge_genera to return a result with a flag on result if species is undefined
     def get_genera(self, family_id: str) -> List[ORMGenus]:
         with Session(self.engine) as session:
-            if family_id:
-                return session.scalars(select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)).all()
-            else:
-                return session.scalars(select(ORMGenus).order_by(ORMGenus.name)).all()
+            # Fetch all genera for the given family
+            genera = session.scalars(
+                select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)
+            ).all()
+
+            #Perhaps this part may not be needed
+            #Find genera that have items without a species
+            undefined_species_genus_ids = session.scalars(
+                select(ORMGenus.id)
+                .join(ORMItem, ORMGenus.id == ORMItem.genus_id)
+                .where(ORMItem.species_id.is_(None))  # Correct NULL check
+                .group_by(ORMGenus.id)
+            ).all()
+
+            # Return a list of dictionaries with an extra field
+            return [
+                {
+                    "id": str(genus.id),  # Ensure ID is a string for JSON compatibility
+                    "name": genus.name,
+                    "has_undefined_species": genus.id in undefined_species_genus_ids
+                }
+                for genus in genera
+            ]
 
     def add_genus(self, new_genus: GenusBase)-> UUID:
         new_uuid = uuid4()
@@ -320,7 +339,7 @@ class PostgresqlDataRepository:
                     ORMFamily.name).join(
                     ORMFamily, ORMGenus.family_id == ORMFamily.id
                 )
-                .where(ORMGenus.name.startswith(letter))
+                .where(ORMGenus.name.ilike(f'{letter}%'))
                 .order_by(ORMGenus.name)
             ).all()  # Returns a list of tuples
 

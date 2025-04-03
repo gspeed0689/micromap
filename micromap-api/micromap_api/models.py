@@ -68,6 +68,8 @@ class StudyBase(BaseModel):
     location: Optional[str]
     remarks: Optional[str]
     category_id: UUID
+    is_reference: bool
+
 
 class Study(StudyBase):
     id: UUID

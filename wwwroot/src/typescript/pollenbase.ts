@@ -101,6 +101,11 @@ export async function thumbnailSelected(c: string) {
    infoSpan.textContent = selectedItem.slide.sample.study.location;
    infoSpan = document.getElementById('info-study-remarks') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.sample.study.remarks;
+   infoSpan = document.getElementById('info-study-remarks') as HTMLSpanElement;
+   infoSpan.textContent = selectedItem.slide.sample.study.remarks;
+
+
+
 
    infoSpan = document.getElementById('info-sample-description') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.sample.description
@@ -186,13 +191,18 @@ async function showThumbnails(species_id: string | null, genus_id: string | null
 // add a box that returns the  get genera_by_letter function and place it within a box
 document.addEventListener("DOMContentLoaded", () => {
   const alphabetFilter = document.getElementById("alphabet-filter");
+  const resultsContainer = document.createElement("div");
+  resultsContainer.className = "results-container";
+
   const resultsBox = document.createElement("div");
   resultsBox.id = "results-box";
   resultsBox.className = "results-box";
-  document.body.appendChild(resultsBox);
+
+  resultsContainer.appendChild(resultsBox);
+  document.body.appendChild(resultsContainer);
 
   if (alphabetFilter) {
-    alphabetFilter.addEventListener("click", async (event) => {
+    alphabetFilter.addEventListener("click", async (event: Event) => {
       const target = event.target as HTMLElement;
       if (target.tagName === "BUTTON") {
         const letter = target.getAttribute("data-letter");
@@ -201,30 +211,80 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log(`Fetching genera for letter: ${letter}`);
 
         try {
-          // Use DefaultService instead of fetch()
           const genera = await DefaultService.generaByLetter(letter);
+          resultsBox.innerHTML = "";
 
-          resultsBox.innerHTML = ""; // Clear previous results
           if (!genera || genera.length === 0) {
             console.warn("No genera found.");
             resultsBox.innerHTML = "<p>No genera found.</p>";
             return;
           }
 
-          const list = document.createElement("ul");
-          genera.forEach((genus: { genus_name: string; family_name: string }) => {
-           const li = document.createElement("li");
-           li.innerHTML = `${genus.genus_name} <br> <span class="family-name">(${genus.family_name})</span>`;
-           list.appendChild(li);
-        });
+          genera.forEach((genus: { genus_id: string; genus_name: string; family_name: string }) => {
+            const div = document.createElement("div");
+            div.className = "result-item";
+            div.dataset.genusId = genus.genus_id;
+            div.innerHTML = `<strong>${genus.genus_name}</strong><br>
+                             <span class="family-name">(${genus.family_name})</span>`;
 
+            div.addEventListener("click", async () => {
+              await fetchSpecies(genus.genus_id, div);
+            });
 
-          resultsBox.appendChild(list);
+            resultsBox.appendChild(div);
+          });
         } catch (error) {
           console.error("Error fetching genera:", error);
         }
       }
     });
   }
-});
+}); //
+
+//
+async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
+  console.log(`Fetching species for genus ID: ${genusId}`);
+  try {
+    const speciesList = await DefaultService.species(genusId);
+
+    let speciesContainer = genusElement.querySelector(".species-container") as HTMLElement;
+    if (!speciesContainer) {
+      speciesContainer = document.createElement("div");
+      speciesContainer.className = "species-container";
+      genusElement.appendChild(speciesContainer);
+    }
+
+    speciesContainer.innerHTML = "";
+
+    // Always add the "ALL" option
+    const allOption = document.createElement("div");
+    allOption.className = "species-item all-option";
+    allOption.innerHTML = `<strong>ALL</strong>`;
+    allOption.addEventListener("click", () => {
+      showThumbnails(null, genusId, null);
+    });
+    speciesContainer.appendChild(allOption);
+
+    // If there are species, add them
+    if (speciesList && speciesList.length > 0) {
+      speciesList.forEach((species: { id: string; name: string }) => {
+        const speciesDiv = document.createElement("div");
+        speciesDiv.className = "species-item";
+        speciesDiv.innerHTML = `<strong>${species.name}</strong>`;
+
+        speciesDiv.addEventListener("click", async () => {
+          speciesContainer.innerHTML = ""; // Clear the species list
+          showThumbnails(species.id, null, null);
+        });
+
+        speciesContainer.appendChild(speciesDiv);
+      });
+    } else {
+      // If there are no species, still show the ALL option
+      console.warn(`No species found for genus ID: ${genusId}`);
+    }
+  } catch (error) {
+    console.error("Error fetching species:", error);
+  }
+}
 

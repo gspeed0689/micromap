@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!--.These links are required for DataTables to work.-->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css" />
 
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>University Utrecht Faculty of Geosciences - Pollen reference database</title>
+  <title>University Utrecht Faculty of Geosciences - Pollen Reference Alphabetical Search Summary Page</title>
   <link rel="stylesheet" href="css/pollenbase.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
-    integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+
+
   <script src="dist/bundle.js"></script>
   <style>
     .item1 {
@@ -26,13 +21,7 @@
       grid-area: main;
     }
 
-    .item3 {
-      grid-area: right;
-    }
 
-    .item4 {
-      grid-area: footer;
-    }
 
     .grid-container {
       display: grid;
@@ -41,6 +30,21 @@
         'main right'
         'footer footer';
     }
+
+    .results-box {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr); /* Creates 6 equal columns */
+      gap: 3px; /* Space between items */
+      padding: 5px;
+}
+
+    .result-item {
+      padding: 1px;
+
+      text-align: center;
+      background: #f9f9f9;
+
+}
 
 
   </style>
@@ -77,7 +81,7 @@
 </div>
 
 
-
+<div id="gallery"></div>
 <div class = "results-box">
 
 
