@@ -257,74 +257,105 @@ class PostgresqlDataRepository:
 #if species is selcted only species is returned.
 
 #subqueries are used to accomadate the database structure.
-    def get_items(self, species_id = None, genus_id: UUID = None, include_non_reference: bool = True  , family_id: UUID = None ) -> List[ORMItem]:
-        max_limit = settings.max_results
+    def get_items(self,
+                  species_id = None,
+                  genus_id: UUID = None,
+                  user_max_results = None,
+                  include_non_reference: bool = True,
+                  family_id: UUID = None,
+                  offset=0,
+                  is_include_if_genus_is_type = True) -> List[ORMItem]:
 
-        #add a condition, if: Exclude non-reference then non-reference is not selected
-        if include_non_reference == True:             #No filtering of non-reference material
+        items_ids = []
+        #add a condition, if: include non-reference, then reference and non-reference returned. If exclude is_type. Then only on the non-reference filter out is_type true.
+        if include_non_reference == True:
             with Session(self.engine) as session:
                 if species_id:
-                    items = session.scalars(
-                        select(ORMItem)
+                    items_ids = session.scalars(
+                        select(ORMItem.id)
                         .where(ORMItem.species_id == species_id)
-                        .limit(max_limit)  # limit results
                     ).all()
-                elif genus_id:
-                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
-                    items = session.scalars(
-                        select(ORMItem)
-                        .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
-                        .limit(max_limit) #limit results
-                    ).all()
+                elif genus_id: #genus inlcude non-reference
+                    if is_include_if_genus_is_type ==True: #condition if by default returning genus_is_type
+                        #EDWIN: WOULD YOU SAY THE DEFULAT IS TRUE? OR IS TEH DEFAULT FALSE? What if it is null?
+                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                        items_ids = session.scalars(
+                            select(ORMItem.id)
+                            .where(
+                                or_(
+                                    ORMItem.genus_id == genus_id,
+                                    ORMItem.species_id.in_(subq_species)
+                                )
+                            )
+                        ).all()
+                    else: # the same but we dont want to include genus_is_type_items
+                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                        items_ids = session.scalars(
+                            select(ORMItem.id)
+                            .where(
+                                or_(
+                                    ORMItem.genus_id == genus_id,
+                                    ORMItem.species_id.in_(subq_species)
+                                )
+                            )
+                        ).where(ORMItem.istype == False).all()
+
                 elif family_id:
                     subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
-                    items = session.scalars(
-                        select(ORMItem)
+                    items_ids = session.scalars(
+                        select(ORMItem.id)
                         .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
-                        .limit(max_limit) #limit results
                     ).all()
-        else:                                               #exclude all non-reference
+        else:    #exclude all non-reference. in this case is_check does not need to be considered. Filter out the non-reference
             with Session(self.engine) as session:
                 if species_id:
-                    items = session.scalars(
-                        select(ORMItem)  # need to join slide to item to study
+                    items_ids = session.scalars(
+                        select(ORMItem.id)  # need to join slide to item to study
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
                         .where(ORMStudy.is_reference == True)
                         .where(ORMItem.species_id == species_id)
-                        .limit(max_limit)  # limit results
                     ).all()
                 elif genus_id:
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
-                    items = session.scalars(
-                        select(ORMItem) #need to join slide to item to study
+                    items_ids = session.scalars(
+                        select(ORMItem.id) #need to join slide to item to study
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
                         .where(ORMStudy.is_reference == True)
                         .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
-                        .limit(max_limit) #limit results
                     ).all()
                 elif family_id:
                     subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
-                    items = session.scalars(
-                        select(ORMItem)
+                    items_ids = session.scalars(
+                        select(ORMItem.id)
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
                         .where(ORMStudy.is_reference== True)
                         .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
-                        .limit(max_limit) #limit
                     ).all()
 
 
-        #Randomize order before returning
-        random.seed(42)
-        random.shuffle(items)  # This is better than sorting with random key
-        return items
+        if items_ids:
+            #Randomize order before returning. seeded so order should be the same
+            random.seed(42)
+            random.shuffle(items_ids)  # This is better than sorting with random key
+            paginated_ids = items_ids[offset: offset + user_max_results]# this ensure that the output is limited to a max number
+
+        #return items not just ids (more efficent)
+            with Session(self.engine) as session:
+                items = session.scalars(
+                select(ORMItem).where(ORMItem.id.in_(paginated_ids))
+                 ).all()
+            return items
+        return [] # return an empty list if nothing else
+
+
 
         """Fetch all genera whose names start with the given letter, along with family ID and name, ordered alphabetically."""
 

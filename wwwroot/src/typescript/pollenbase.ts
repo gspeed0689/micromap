@@ -12,84 +12,116 @@ let currentItems: Array<Item> = null;
 let families: Array<Family> = null;
 //let genera: Array<Genus> = null;
 
+
 /**
- * Populates the family select box in the search bar.
+ * Populates the family select box in the dropdown menu bar.
+ Defaults to 'Please select a family' so the page doesn't load with preloaded thumbnails
  *
  */
-export async function populateFamilySelect(): Promise<void> {
+  export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-  let selectedid = null;
+  familySelectBox.innerHTML = ''; // Clear any existing options
+
+  // Add default "Please select" option
+  const defaultOption = new Option('Please select a family', '', true, true);
+  defaultOption.disabled = true;
+  familySelectBox.add(defaultOption);
 
   const families = await DefaultService.families(CATALOGID);
 
   for (const family of families) {
-    if (selectedid == null)
-      selectedid = family.id;
     familySelectBox.add(new Option(family.name, family.id));
   }
-  if (selectedid) {
-    familySelectBox.value = selectedid;
-    onFamilyChange();
-  }
+
+
 }
 
-export function onFamilyChange() {
-  const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-  if (familySelectBox.value == "")
-    return;
-  console.log('familychange ', JSON.stringify(familySelectBox.value));
-  populateGeneraSelect(familySelectBox.value);
-}
 
-export function onGeneraChange() {
-  const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
-  console.log('genera change ', JSON.stringify(generaSelectBox.value));
-  const selectedGenus = generaSelectBox.value;
-  if (selectedGenus != '__ALL__') {
-    populateSpeciesSelect(selectedGenus)
-    showThumbnails(null, selectedGenus, null);
-  }
-  else {
-    console.log('all genusses')
-    const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-    showThumbnails(null, null, familySelectBox.value);
-  }
-}
-
-async function populateGeneraSelect(familyid: string) {
-  const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
-  while (generaSelectBox.firstChild) {
-    generaSelectBox.firstChild.remove()
-  }
-
-  generaSelectBox.add(new Option('All', '__ALL__'));
-
-  const genera = await DefaultService.genera(familyid);
-  for (const genus of genera) {
-    generaSelectBox.add(new Option(genus.name, genus.id));
-  }
-  onGeneraChange();
-}
-
-async function populateSpeciesSelect(generaid: string) {
-  const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
-  while (speciesSelectBox.firstChild) {
-    speciesSelectBox.firstChild.remove()
-  }
-
-  if (generaid != null) {
-    const speciesList = await DefaultService.species(generaid);
-    for (const species of speciesList) {
-      speciesSelectBox.add(new Option(species.name, species.id));
+    export function onFamilyChange() {
+      const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
+      if (familySelectBox.value == "")
+        return;
+      console.log('familychange ', JSON.stringify(familySelectBox.value));
+      populateGeneraSelect(familySelectBox.value);
     }
-  }
-}
 
-export function onSpeciesChange() {
-  const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
-  showThumbnails(speciesSelectBox.value, null, null);
-}
+    export function onGeneraChange() {
+      const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
+      console.log('genera change ', JSON.stringify(generaSelectBox.value));
+      const selectedGenus = generaSelectBox.value;
+      if (selectedGenus != '__ALL__') {
+        populateSpeciesSelect(selectedGenus)
+        showThumbnails(null, selectedGenus, null);
+      }
+      else {
+        console.log('all genusses')
+        const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
+        showThumbnails(null, null, familySelectBox.value);
+      }
+    }
 
+    async function populateGeneraSelect(familyid: string) {
+      const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
+      while (generaSelectBox.firstChild) {
+        generaSelectBox.firstChild.remove()
+      }
+
+      generaSelectBox.add(new Option('All', '__ALL__'));
+
+      const genera = await DefaultService.genera(familyid);
+      for (const genus of genera) {
+        generaSelectBox.add(new Option(genus.name, genus.id));
+      }
+      onGeneraChange();
+    }
+
+    async function populateSpeciesSelect(generaid: string) {
+      const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+      while (speciesSelectBox.firstChild) {
+        speciesSelectBox.firstChild.remove()
+      }
+
+      if (generaid != null) {
+        const speciesList = await DefaultService.species(generaid);
+        for (const species of speciesList) {
+          speciesSelectBox.add(new Option(species.name, species.id));
+        }
+      }
+    }
+
+    export function onSpeciesChange() {
+      const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+      showThumbnails(speciesSelectBox.value, null, null);
+    }
+
+
+// Logic to  get page number display working
+let currentPage: number = 1; // Start on page 1
+
+document.addEventListener("DOMContentLoaded", () => {
+  const nextBtn = document.getElementById("next_button") as HTMLButtonElement;
+  const backBtn = document.getElementById("back_button") as HTMLButtonElement;
+  const pageDisplay = document.getElementById("page-number") as HTMLSpanElement;
+
+  const updatePageDisplay = () => {
+    pageDisplay.textContent = currentPage.toString();
+  };
+
+  nextBtn.addEventListener("click", () => {
+    currentPage++;
+    updatePageDisplay();
+  });
+
+  backBtn.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      updatePageDisplay();
+    }
+  });
+
+  // Initial display
+  updatePageDisplay();
+});
 
 
 export async function thumbnailSelected(c: string) {
@@ -136,7 +168,15 @@ export async function thumbnailSelected(c: string) {
 
 
 
-async function showThumbnails(species_id: string | null, genus_id: string | null, family_id: string | null) {
+
+
+async function showThumbnails(
+  species_id: string | null,
+  genus_id: string | null,
+  family_id: string | null,
+  typeUserMaxResults?: number,
+  page =1
+) {
   if (!families) families = await DefaultService.families(CATALOGID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
@@ -144,23 +184,28 @@ async function showThumbnails(species_id: string | null, genus_id: string | null
     gallery.firstChild.remove();
   }
 
-
-
   // Ensure checkbox exists before accessing `.checked`
   const checkbox = document.getElementById('includeNonReference') as HTMLInputElement | null;
   const includeNonReference = checkbox ? checkbox.checked : true; //
 
-  console.log(
-    `Fetching items for ${genus_id ? "genus" : "family"}: ${genus_id || family_id}, Include Non-Reference: ${includeNonReference}`
-  );
+ // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
+  const maxResultsInput = document.getElementById('max-results-input') as HTMLInputElement | null;
+  const maxResultsRaw = maxResultsInput?.value?.trim();
+  const maxResults = maxResultsRaw && !isNaN(parseInt(maxResultsRaw)) ? parseInt(maxResultsRaw) : 10; // default to 10
+
+
+ // Get value for page
+  const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;
 
  try {
+     let currentItems;
+
   if (species_id) {
-    currentItems = await DefaultService.items(null, null, species_id, includeNonReference);
+    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
   } else if (genus_id) {
-    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference);
+    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
   } else {
-    currentItems = await DefaultService.items(family_id, null, null, includeNonReference);
+    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
   }
 
     if (!currentItems || currentItems.length === 0) {
@@ -188,11 +233,40 @@ async function showThumbnails(species_id: string | null, genus_id: string | null
   }
 }
 
+
+
+
+
+
+// #TODO ======= CLEAR GALLERY AND THUMBNAILS =======
 // add a box that returns the  get genera_by_letter function and place it within a box
+
+// for alphabet fucntion to work we need to clear the Viewandinfo() first we define the fucntions and call it inside the event listner
+
+function hideViewerAndInfo() {
+  const viewer = document.getElementById('viewer-container');
+  const infoPanel = document.getElementById('infopanel');
+  if (viewer) viewer.style.display = 'none';
+  if (infoPanel) infoPanel.style.display = 'none';
+}
+
+function showViewerAndInfo() {
+  const viewer = document.getElementById('viewer-container');
+  const infoPanel = document.getElementById('infopanel');
+  if (viewer) viewer.style.display = 'block';
+  if (infoPanel) infoPanel.style.display = 'block';
+}
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const alphabetFilter = document.getElementById("alphabet-filter");
   const resultsContainer = document.createElement("div");
   resultsContainer.className = "results-container";
+
+  //
+
+
 
   const resultsBox = document.createElement("div");
   resultsBox.id = "results-box";
@@ -209,6 +283,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!letter) return;
 
         console.log(`Fetching genera for letter: ${letter}`);
+
+       //clear gallery at the start of the function
+        const gallery = document.getElementById('gallery') as HTMLDivElement;
+        if   (gallery) {
+          while (gallery.firstChild) {
+            gallery.firstChild.remove();
+          }
+        }
+
+
+        // Hide viewer + info panel
+        hideViewerAndInfo();
+
+
+
+
+
 
         try {
           const genera = await DefaultService.generaByLetter(letter);
@@ -261,9 +352,11 @@ async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
     allOption.className = "species-item all-option";
     allOption.innerHTML = `<strong>ALL</strong>`;
     allOption.addEventListener("click", () => {
+        showViewerAndInfo();
       showThumbnails(null, genusId, null);
     });
     speciesContainer.appendChild(allOption);
+
 
     // If there are species, add them
     if (speciesList && speciesList.length > 0) {

@@ -43,11 +43,13 @@ async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
                 is_include_non_reference_check: bool = Query(default=True),
+                max_results: int = settings.max_results,
+                type_user_max_results: int = Query(default=100),
                 study: Optional[str] = Query(default=None),
                 sample: Optional[str] = Query(default=None),
                 slide: Optional[str] = Query(default=None),
-                max_results: int = settings.max_results,
-                order: str = settings.default_order) -> List[Item]:
+                order: str = settings.default_order,
+                page: int = Query(default=1)) -> List[Item]:
     """
     Handles a new query for pollen images.
 
@@ -62,15 +64,22 @@ async def items(family: Optional[str] = Query(default=None),
     :return: A dictionary with matches.
     """
     # Build search query
+    #ensure the user doesnt put in a number greater than what is allowed in env settings
+    if type_user_max_results > max_results:
+        type_user_max_results = max_results#
 
-    print('/items', family, genus)
+    # Calculate offset
+    offset = (page - 1) * type_user_max_results
+
+
+    # Fetch results based on available filters
     if species:
-        return repository.get_items(species_id=species, include_non_reference=is_include_non_reference_check)
+        return repository.get_items(species_id=species, user_max_results = type_user_max_results, include_non_reference=is_include_non_reference_check, offset =offset)
         pass
     elif genus:
-        return repository.get_items(genus_id=genus, include_non_reference =is_include_non_reference_check)
+        return repository.get_items(genus_id=genus, user_max_results = type_user_max_results, include_non_reference =is_include_non_reference_check, offset = offset)
     elif family:
-        return repository.get_items(family_id=family, include_non_reference =is_include_non_reference_check)
+        return repository.get_items(family_id=family, user_max_results = type_user_max_results,  include_non_reference =is_include_non_reference_check, offset = offset)
     else:
         # TODO: Search on database level.
         pass

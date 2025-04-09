@@ -70,33 +70,62 @@
           <button class="btn" id="toggle-ribbon">Summary of pollendatabase</button>
         </a>
       </div>
-                    <!-- MAX RESULTS -->
-            <div class="max_results_count">
-               Max Results <input type="number" id="max-results-input" class="input-number" placeholder="Enter a number">
-            </div>
+                    <!-- MAX RESULTS NAVIGATION-->
+        <div class="max_results_count">
+        Max Results
+        <input type="number" id="max-results-input" class="input-number" placeholder="Enter a number">
+      </div>
+             <!-- PAGE NUMBER NEXT AND PREVIOUS -->
+        <div class="pagination-controls">
+         <span class="page-number-text">Page number:</span>
+          <span id="page-number">1</span>
+        <button id="back_button">Previous</button>
+        <button id="next_button">Next</button>
+        </div>
+        <!-- ADD a refresh button -->
+        <button id="refresh-button">Refresh Thumbnails</button>
 
 
 
+         <!-- ALPHABET SEARCHBAR NAVIGATION-->
 
       <div class="searchbar">
         <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
         <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
         <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
-        <span class="font-bold">Sub-Species :</span> <select class="btn" id="sub-species-select"></select>
+
       </div>
 
       <!-- Alphabetical Search Ribbon (Hidden by Default) -->
-      <div id="alphabet-ribbon" class="alphabet-ribbon">
-        <span class="letter">A</span> <span class="letter">B</span> <span class="letter">C</span>
-        <span class="letter">D</span> <span class="letter">E</span> <span class="letter">F</span>
-        <span class="letter">G</span> <span class="letter">H</span> <span class="letter">I</span>
-        <span class="letter">J</span> <span class="letter">K</span> <span class="letter">L</span>
-        <span class="letter">M</span> <span class="letter">N</span> <span class="letter">O</span>
-        <span class="letter">P</span> <span class="letter">Q</span> <span class="letter">R</span>
-        <span class="letter">S</span> <span class="letter">T</span> <span class="letter">U</span>
-        <span class="letter">V</span> <span class="letter">W</span> <span class="letter">X</span>
-        <span class="letter">Y</span> <span class="letter">Z</span>
-      </div>
+
+<div id="alphabet-filter" class="alphabet-filter">
+  <button data-letter="A">A</button>
+  <button data-letter="B">B</button>
+  <button data-letter="C">C</button>
+  <button data-letter="D">D</button>
+  <button data-letter="E">E</button>
+  <button data-letter="F">F</button>
+  <button data-letter="G">G</button>
+  <button data-letter="H">H</button>
+  <button data-letter="I">I</button>
+  <button data-letter="J">J</button>
+  <button data-letter="K">K</button>
+  <button data-letter="L">L</button>
+  <button data-letter="M">M</button>
+  <button data-letter="N">N</button>
+  <button data-letter="O">O</button>
+  <button data-letter="P">P</button>
+  <button data-letter="Q">Q</button>
+  <button data-letter="R">R</button>
+  <button data-letter="S">S</button>
+  <button data-letter="T">T</button>
+  <button data-letter="U">U</button>
+  <button data-letter="V">V</button>
+  <button data-letter="W">W</button>
+  <button data-letter="X">X</button>
+  <button data-letter="Y">Y</button>
+  <button data-letter="Z">Z</button>
+</div>
     </div>
   </div>
 
@@ -161,7 +190,7 @@
 
     <!--<Alpabetical search option>-->
      document.getElementById("toggle-ribbon").addEventListener("click", function () {
-    var ribbon = document.getElementById("alphabet-ribbon");
+    var ribbon = document.getElementById("alphabet-filter");
     var dropdowns = document.querySelector(".searchbar");
 
     if (ribbon.style.display === "none" || ribbon.style.display === "") {
@@ -174,7 +203,7 @@
   });
 
   // Hide the ribbon by default
-  document.getElementById("alphabet-ribbon").style.display = "none";
+  document.getElementById("alphabet-filter").style.display = "none";
 
   </script>
 </body>
