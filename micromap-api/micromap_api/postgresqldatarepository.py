@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 import sqlalchemy
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import select, or_
+from sqlalchemy.sql import select, or_, and_
 from sqlalchemy import create_engine, select, func
 
 
@@ -81,32 +81,39 @@ class PostgresqlDataRepository:
                 raise EntityDoesNotExistException()
 
 
-    #modify existing get ge_genera to return a result with a flag on result if species is undefined
-    def get_genera(self, family_id: str) -> List[ORMGenus]:
-        with Session(self.engine) as session:
-            # Fetch all genera for the given family
-            genera = session.scalars(
-                select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)
-            ).all()
-
-            #Perhaps this part may not be needed
-            #Find genera that have items without a species
-            undefined_species_genus_ids = session.scalars(
-                select(ORMGenus.id)
-                .join(ORMItem, ORMGenus.id == ORMItem.genus_id)
-                .where(ORMItem.species_id.is_(None))  # Correct NULL check
-                .group_by(ORMGenus.id)
-            ).all()
-
-            # Return a list of dictionaries with an extra field
-            return [
+    #ToDo: modify existing get ge_genera to return a result with a flag on result if species is undefined
+    #This fucntion is used to fill in the genera drop down menu using the family_id
+    #Additionally if the is_include_if_genus_is_type is untick then it wont return is_type
+    def get_genera(self, family_id: str, is_include_if_genus_is_type = True) -> List[ORMGenus]:
+        if is_include_if_genus_is_type == True:
+            with Session(self.engine) as session:
+                # Fetch all genera for the given family
+                genera = session.scalars(
+                    select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)
+                ).all()
+                return [
                 {
                     "id": str(genus.id),  # Ensure ID is a string for JSON compatibility
-                    "name": genus.name,
-                    "has_undefined_species": genus.id in undefined_species_genus_ids
+                    "name": genus.name
                 }
                 for genus in genera
             ]
+        else: # if we dont want is_type genus
+            with (Session(self.engine) as session):
+                # Fetch all genera for the given family
+                genera = session.scalars(
+                    select(ORMGenus).where(ORMGenus.family_id == family_id)
+                    .where(ORMGenus.is_type != True)  # Filter to exclude is_type = True
+                    .order_by(ORMGenus.name)
+                ).all()
+                return [
+                    {
+                        "id": str(genus.id),  # Ensure ID is a string for JSON compatibility
+                        "name": genus.name
+                    }
+                    for genus in genera
+                ]
+
 
     def add_genus(self, new_genus: GenusBase)-> UUID:
         new_uuid = uuid4()
@@ -252,9 +259,17 @@ class PostgresqlDataRepository:
             session.commit()
 
         return new_uuid
-#this function works by input. If family is slected, genus, family and species is retuned
-#if genera is selected,  family and genus are returned
+#this function works by input. If family is selected, the family is retuned, so all genera and related species are returned
+#if genera is selected, genus and related species are returned
 #if species is selcted only species is returned.
+
+#the item table only has either family_id, genus_id or species_id cannot be both. #ToDo: Implement this in SQL
+
+#is_type is a flag that pretains to if a there is a limit on the depth of precision on certain genera/species
+#is_type only concern non-reference material
+#Sometimes users may want to filter out is_type #ToDO: highlight if Is_type on the website
+#is_type does not filter from family drop down. It only filters out if is_reference in the study field.
+
 
 #subqueries are used to accomadate the database structure.
     def get_items(self,
@@ -264,41 +279,54 @@ class PostgresqlDataRepository:
                   include_non_reference: bool = True,
                   family_id: UUID = None,
                   offset=0,
-                  is_include_if_genus_is_type = True) -> List[ORMItem]:
+                  is_include_if_genus_is_type = True,
+                  is_include_if_species_is_type = True) -> List[ORMItem]:
 
         items_ids = []
         #add a condition, if: include non-reference, then reference and non-reference returned. If exclude is_type. Then only on the non-reference filter out is_type true.
-        if include_non_reference == True:
+        if include_non_reference == True: #this can be fitered by type
             with Session(self.engine) as session:
                 if species_id:
-                    items_ids = session.scalars(
-                        select(ORMItem.id)
-                        .where(ORMItem.species_id == species_id)
-                    ).all()
-                elif genus_id: #genus inlcude non-reference
-                    if is_include_if_genus_is_type ==True: #condition if by default returning genus_is_type
-                        #EDWIN: WOULD YOU SAY THE DEFULAT IS TRUE? OR IS TEH DEFAULT FALSE? What if it is null?
+                    if is_include_if_species_is_type == True:
+                        items_ids = session.scalars(
+                            select(ORMItem.id)
+                            .where(ORMItem.species_id == species_id)
+                        ).all()
+                    else: #only select where not is is_type
+                        items_ids = session.scalars(
+                            select(ORMItem.id)
+                            .join(ORMSpecies, ORMItem.species_id == ORMSpecies.id)
+                            .where(
+                                ORMItem.species_id == species_id,
+                                ORMSpecies.is_type != True #not is_type
+                            )
+                        ).all()
+                elif genus_id: #genus first check to inlcude non-reference
+                    if is_include_if_genus_is_type ==True: #condition if by default returning genus_is_type, include items that are under the  species
                         subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
                         items_ids = session.scalars(
                             select(ORMItem.id)
+                            .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
+                        ).all()
+                    else: #the same fetch request but exclude Is_type
+                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                        #dont select is_type false
+                        items_ids = session.scalars(
+                            select(ORMItem.id)
+                            .join(ORMGenus,
+                                  ORMGenus.id == ORMItem.genus_id)  # Ensure we join with ORMGenus to check is_type
                             .where(
                                 or_(
-                                    ORMItem.genus_id == genus_id,
-                                    ORMItem.species_id.in_(subq_species)
+                                    # Case 1: Item belongs to the genus, and genus is not a reference type (is_type != True)
+                                    and_(
+                                        ORMItem.genus_id == genus_id,  # Genus ID matches
+                                        ORMGenus.is_type != True  # Genus is not of type (non-reference)
+                                    ),
+                                    # Case 2: Item belongs to a species of the genus
+                                    ORMItem.species_id.in_(subq_species)  # Item belongs to a species under the genus
                                 )
                             )
                         ).all()
-                    else: # the same but we dont want to include genus_is_type_items
-                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
-                        items_ids = session.scalars(
-                            select(ORMItem.id)
-                            .where(
-                                or_(
-                                    ORMItem.genus_id == genus_id,
-                                    ORMItem.species_id.in_(subq_species)
-                                )
-                            )
-                        ).where(ORMItem.istype == False).all()
 
                 elif family_id:
                     subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
@@ -342,9 +370,7 @@ class PostgresqlDataRepository:
 
 
         if items_ids:
-            #Randomize order before returning. seeded so order should be the same
-            random.seed(42)
-            random.shuffle(items_ids)  # This is better than sorting with random key
+            #Use a limit before the heavy query
             paginated_ids = items_ids[offset: offset + user_max_results]# this ensure that the output is limited to a max number
 
         #return items not just ids (more efficent)
@@ -352,6 +378,11 @@ class PostgresqlDataRepository:
                 items = session.scalars(
                 select(ORMItem).where(ORMItem.id.in_(paginated_ids))
                  ).all()
+
+            # Shuffle after query but with a seed so it is reproducible
+            random.seed(41)
+            random.shuffle(items)  # This shuffles the actual ORMItem objects
+
             return items
         return [] # return an empty list if nothing else
 
@@ -359,22 +390,43 @@ class PostgresqlDataRepository:
 
         """Fetch all genera whose names start with the given letter, along with family ID and name, ordered alphabetically."""
 
-    def get_genera_by_letter(self, letter: str):
-        """Fetch all genera whose names start with the given letter, including family ID and name, ordered alphabetically."""
-        with Session(self.engine) as session:
-            genera = session.execute(
-                select(
-                    ORMGenus.id,  #
-                    ORMGenus.name,
-                    ORMFamily.id,  #
-                    ORMFamily.name).join(
-                    ORMFamily, ORMGenus.family_id == ORMFamily.id
-                )
-                .where(ORMGenus.name.ilike(f'{letter}%'))
-                .order_by(ORMGenus.name)
-            ).all()  # Returns a list of tuples
+    def get_genera_by_letter(self, letter: str, is_include_if_genus_is_type: bool = True):
+        """
+        Fetch all genera whose names start with the given letter, including family ID and name,
+        ordered alphabetically.
 
-        # Convert list of tuples to list of dictionaries
+        If `is_include_if_genus_is_type` is False, genera where ORMGenus.is_type is True will be excluded.
+        """
+        with Session(self.engine) as session:
+            query = (
+                select(
+                    ORMGenus.id,
+                    ORMGenus.name,
+                    ORMFamily.id,
+                    ORMFamily.name
+                )
+                .join(ORMFamily, ORMGenus.family_id == ORMFamily.id)
+                .where(ORMGenus.name.ilike(f'{letter}%'))
+            )
+
+            if not is_include_if_genus_is_type:
+                query = query.where(ORMGenus.is_type == False)
+
+            query = query.order_by(ORMGenus.name)
+
+            genera = session.execute(query).all()
+
+        genera_dicts = [{
+            'genus_id': genus_id,
+            'genus_name': genus_name,
+            'family_id': family_id,
+            'family_name': family_name
+        } for genus_id, genus_name, family_id, family_name in genera]
+
+        return genera_dicts
+
+        #if genera include genrea-TYPE not selected then dont include genera_type
+
         # Convert list of tuples to list of dictionaries
         genera_dicts = [{
             'genus_id': genus_id,

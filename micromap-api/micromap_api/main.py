@@ -49,7 +49,10 @@ async def items(family: Optional[str] = Query(default=None),
                 sample: Optional[str] = Query(default=None),
                 slide: Optional[str] = Query(default=None),
                 order: str = settings.default_order,
-                page: int = Query(default=1)) -> List[Item]:
+                page: int = Query(default=1),
+                is_include_if_genus_is_type: bool = Query(default=True),
+                is_include_if_species_is_type: bool = Query(default = True)
+                ) -> List[Item]:
     """
     Handles a new query for pollen images.
 
@@ -74,10 +77,10 @@ async def items(family: Optional[str] = Query(default=None),
 
     # Fetch results based on available filters
     if species:
-        return repository.get_items(species_id=species, user_max_results = type_user_max_results, include_non_reference=is_include_non_reference_check, offset =offset)
+        return repository.get_items(species_id=species, user_max_results = type_user_max_results, include_non_reference=is_include_non_reference_check, offset =offset, is_include_if_species_is_type = is_include_if_species_is_type)
         pass
     elif genus:
-        return repository.get_items(genus_id=genus, user_max_results = type_user_max_results, include_non_reference =is_include_non_reference_check, offset = offset)
+        return repository.get_items(genus_id=genus, user_max_results = type_user_max_results, include_non_reference =is_include_non_reference_check, offset = offset, is_include_if_genus_is_type = is_include_if_genus_is_type)
     elif family:
         return repository.get_items(family_id=family, user_max_results = type_user_max_results,  include_non_reference =is_include_non_reference_check, offset = offset)
     else:
@@ -124,8 +127,8 @@ async def put_family(family: Family):
 
 #get Genera for drop down
 @app.get("/genera/")
-async def genera(family_id: str) -> List[Dict]:
-    return repository.get_genera(family_id)
+async def genera(family_id: str, is_include_if_genus_is_type: bool = True) -> List[Dict]:
+    return repository.get_genera(family_id, is_include_if_genus_is_type)
 
 
 #made family ID optional. Test for DataTable functionality
@@ -210,8 +213,8 @@ async def post_slide(slide: SlideCreateDTO):
 
 #return GENERA by capital first letter
 @app.get("/genera/letter/{letter}")
-async def genera_by_letter(letter: str):
-    genera_list = repository.get_genera_by_letter(letter)
+async def genera_by_letter(letter: str, is_include_if_genus_is_type: bool = True):
+    genera_list = repository.get_genera_by_letter(letter, is_include_if_genus_is_type)
     return genera_list
 
 #return FAMILY by capital first letter

@@ -13,6 +13,26 @@ let families: Array<Family> = null;
 //let genera: Array<Genus> = null;
 
 
+
+/**
+ * First set up the is_type button logic. If the user only wants Reference material then type filtering is not worth showing
+ This function works by if is_reference button un-clicked then the is_type options disapear
+ *
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  const includeNonRef = document.getElementById('includeNonReference') as HTMLInputElement;
+  const disappear_is_check = document.getElementById('make_genus_and_species_IS_TYPE_buttons') as HTMLDivElement;
+
+  function toggledisappear_is_check() {
+    disappear_is_check.style.display = includeNonRef.checked ? 'block' : 'none';
+  }
+
+  toggledisappear_is_check();
+  includeNonRef.addEventListener('change', toggledisappear_is_check);
+});
+
+
+
 /**
  * Populates the family select box in the dropdown menu bar.
  Defaults to 'Please select a family' so the page doesn't load with preloaded thumbnails
@@ -47,8 +67,17 @@ let families: Array<Family> = null;
 
     export function onGeneraChange() {
       const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
-      console.log('genera change ', JSON.stringify(generaSelectBox.value));
       const selectedGenus = generaSelectBox.value;
+
+      console.log('genera change ', JSON.stringify(generaSelectBox.value));
+
+
+      if (selectedGenus === '') {
+        // Do nothing — waiting for a valid selection
+        console.log('No genus selected yet.');
+        return;
+      }
+
       if (selectedGenus != '__ALL__') {
         populateSpeciesSelect(selectedGenus)
         showThumbnails(null, selectedGenus, null);
@@ -60,27 +89,51 @@ let families: Array<Family> = null;
       }
     }
 
+//The purpose of this is to fill in the genera drop down but also if the is_genera type box not clciked we want to exclude them
     async function populateGeneraSelect(familyid: string) {
+      //clear exisiting
       const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
       while (generaSelectBox.firstChild) {
         generaSelectBox.firstChild.remove()
       }
 
+        // Add default "Please select a genera" option
+      const defaultOption = new Option('Please select a genera', '', true, true);
+      defaultOption.disabled = true;
+      generaSelectBox.add(defaultOption);
+
+      //add 'ALL' Option
       generaSelectBox.add(new Option('All', '__ALL__'));
 
-      const genera = await DefaultService.genera(familyid);
+        // Get the checkbox state for whether to include genera with is_type = True
+      const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
+      const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+
+
+    // Populate genera with API call
+      const genera = await DefaultService.genera(familyid, is_include_if_genus_is_type);
       for (const genus of genera) {
         generaSelectBox.add(new Option(genus.name, genus.id));
       }
       onGeneraChange();
     }
 
+// species drop down now defaults to please select a species
+// ToDo: Implement the is_type filter by species
     async function populateSpeciesSelect(generaid: string) {
-      const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+        const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+
+      // Clear existing options
       while (speciesSelectBox.firstChild) {
-        speciesSelectBox.firstChild.remove()
+        speciesSelectBox.firstChild.remove();
       }
 
+      // Add default "Please select a species" option
+      const defaultOption = new Option('Please select a species', '', true, true);
+      defaultOption.disabled = true;
+      speciesSelectBox.add(defaultOption);
+
+      // Populate with species from the API
       if (generaid != null) {
         const speciesList = await DefaultService.species(generaid);
         for (const species of speciesList) {
@@ -89,10 +142,19 @@ let families: Array<Family> = null;
       }
     }
 
+
     export function onSpeciesChange() {
       const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
-      showThumbnails(speciesSelectBox.value, null, null);
+      const selectedSpecies = speciesSelectBox.value;
+
+      if (selectedSpecies === '') {
+        console.log('No species selected yet.');
+        return; // Skip if default option is still selected
+      }
+
+      showThumbnails(selectedSpecies, null, null);
     }
+
 
 
 // Logic to  get page number display working
@@ -188,6 +250,16 @@ async function showThumbnails(
   const checkbox = document.getElementById('includeNonReference') as HTMLInputElement | null;
   const includeNonReference = checkbox ? checkbox.checked : true; //
 
+  // Add const for if is_genus_check
+const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
+const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+
+    // Add const for if is_species_check
+const speciesTypeCheckbox = document.getElementById('includeSpeciesType') as HTMLInputElement | null;
+const is_include_if_species_is_type = speciesTypeCheckbox ? speciesTypeCheckbox.checked : true;
+
+
+
  // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
   const maxResultsInput = document.getElementById('max-results-input') as HTMLInputElement | null;
   const maxResultsRaw = maxResultsInput?.value?.trim();
@@ -201,11 +273,11 @@ async function showThumbnails(
      let currentItems;
 
   if (species_id) {
-    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
+    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, undefined, is_include_if_species_is_type);
   } else if (genus_id) {
-    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
+    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, is_include_if_genus_is_type, undefined);
   } else {
-    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage);
+    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, undefined, undefined);
   }
 
     if (!currentItems || currentItems.length === 0) {
@@ -300,9 +372,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+        // Get the checkbox state for whether to include genera with is_type
+        const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
+        const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
         try {
-          const genera = await DefaultService.generaByLetter(letter);
+          const genera = await DefaultService.generaByLetter(letter, is_include_if_genus_is_type);
           resultsBox.innerHTML = "";
 
           if (!genera || genera.length === 0) {
@@ -332,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }); //
 
+//ToDo: filter is_type species from this species fetch
 //
 async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
   console.log(`Fetching species for genus ID: ${genusId}`);
