@@ -276,11 +276,11 @@ const is_include_if_species_is_type = speciesTypeCheckbox ? speciesTypeCheckbox.
      let currentItems;
 
   if (species_id) {
-    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, undefined, is_include_if_species_is_type);
+    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, undefined, is_include_if_species_is_type);
   } else if (genus_id) {
-    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, is_include_if_genus_is_type, undefined);
+    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, is_include_if_genus_is_type, undefined);
   } else {
-    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, undefined, undefined, undefined, maxResults, 'abundance', currentPage, undefined, undefined);
+    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, undefined, undefined);
   }
 
     if (!currentItems || currentItems.length === 0) {
