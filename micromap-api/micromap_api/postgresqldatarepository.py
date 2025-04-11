@@ -55,7 +55,6 @@ class PostgresqlDataRepository:
                 raise EntityDoesNotExistException()
 
     # Families
-
     def get_families(self, category_id: str) -> List[ORMFamily]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMFamily).where(ORMFamily.category_id == category_id).order_by(ORMFamily.name)).all()
@@ -80,11 +79,10 @@ class PostgresqlDataRepository:
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
 
-
-    #ToDo: modify existing get ge_genera to return a result with a flag on result if species is undefined
-    #This fucntion is used to fill in the genera drop down menu using the family_id
-    #Additionally if the is_include_if_genus_is_type is untick then it wont return is_type
     def get_genera(self, family_id: str, is_include_if_genus_is_type = True) -> List[ORMGenus]:
+        '''This fucntion is used to fill in the genera drop down menu using the family_id
+        #Additionally if the is_include_if_genus_is_type is untick then it wont return is_type
+        Reference filtering handles by hiding the option is not clicked'''
         if is_include_if_genus_is_type == True:
             with Session(self.engine) as session:
                 # Fetch all genera for the given family
@@ -259,17 +257,6 @@ class PostgresqlDataRepository:
             session.commit()
 
         return new_uuid
-#this function works by input. If family is selected, the family is retuned, so all genera and related species are returned
-#if genera is selected, genus and related species are returned
-#if species is selcted only species is returned.
-
-#the item table only has either family_id, genus_id or species_id cannot be both. #ToDo: Implement this in SQL
-
-#is_type is a flag that pretains to if a there is a limit on the depth of precision on certain genera/species
-#is_type only concern non-reference material
-#Sometimes users may want to filter out is_type #ToDO: highlight if Is_type on the website
-#is_type does not filter from family drop down. It only filters out if is_reference in the study field.
-
 
 #subqueries are used to accomadate the database structure.
     def get_items(self,
@@ -281,6 +268,17 @@ class PostgresqlDataRepository:
                   offset=0,
                   is_include_if_genus_is_type = True,
                   is_include_if_species_is_type = True) -> List[ORMItem]:
+
+        # this function works by input. If family is selected, the family is retuned, so all genera and related species are returned
+        # if genera is selected, genus and related species are returned
+        # if species is selcted only species is returned.
+
+        # the item table only has either family_id, genus_id or species_id cannot be both. #ToDo: Issue 17, Implement this in SQL
+
+        # is_type is a flag that pretains to if a there is a limit on the depth of precision on certain genera/species
+        # is_type only concern non-reference material
+        # Sometimes users may want to filter out is_type #ToDO: highlight if Is_type on the website
+        # is_type does not filter from family drop down. It only filters out if is_reference in the study field.
 
         items_ids = []
         #add a condition, if: include non-reference, then reference and non-reference returned. If exclude is_type. Then only on the non-reference filter out is_type true.
@@ -329,6 +327,7 @@ class PostgresqlDataRepository:
                         ).all()
 
                 elif family_id:
+                    # 2 subqueries are required to capture alll those that are genera and species under this item
                     subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
                     items_ids = session.scalars(
@@ -387,9 +386,6 @@ class PostgresqlDataRepository:
         return [] # return an empty list if nothing else
 
 
-
-        """Fetch all genera whose names start with the given letter, along with family ID and name, ordered alphabetically."""
-
     def get_genera_by_letter(self, letter: str, is_include_if_genus_is_type: bool = True):
         """
         Fetch all genera whose names start with the given letter, including family ID and name,
@@ -437,7 +433,7 @@ class PostgresqlDataRepository:
 
         return genera_dicts
 
-        # for the dashboard summary: Part 1 is a test to show species count
+##### for the dashboard summary: Part 1 is a test to show species count######
     #species count
     def get_species_count(self) -> int:  # Add 'self'
         with Session(self.engine) as session:

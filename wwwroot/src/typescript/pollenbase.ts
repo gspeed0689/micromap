@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Populates the family select box in the dropdown menu bar.
  Defaults to 'Please select a family' so the page doesn't load with preloaded thumbnails
- *
+
+ ToDo: Somewhere the get_familes function is failing #Issue: 14*
  */
   export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
@@ -53,10 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
     familySelectBox.add(new Option(family.name, family.id));
   }
 
-
 }
-
-
+/**
+When family is changed the family_id is returned and used to populate genera
+ */
     export function onFamilyChange() {
       const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
       if (familySelectBox.value == "")
@@ -64,7 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('familychange ', JSON.stringify(familySelectBox.value));
       populateGeneraSelect(familySelectBox.value);
     }
-
+ /**
+Genera change works, defaults to select an option, or ALL or genera, then populates thumbnails
+ */
     export function onGeneraChange() {
       const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
       const selectedGenus = generaSelectBox.value;
@@ -83,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showThumbnails(null, selectedGenus, null);
       }
       else {
-        console.log('all genusses')
+        console.log('all genera')
         const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
         showThumbnails(null, null, familySelectBox.value);
       }
@@ -157,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// Logic to  get page number display working
+// Logic to  get page number display working, cant go below 0 used in get_items for pagation control
 let currentPage: number = 1; // Start on page 1
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -329,17 +332,13 @@ function showViewerAndInfo() {
   if (infoPanel) infoPanel.style.display = 'block';
 }
 
-
-
+// What happens when you click Alphabet-filter
 document.addEventListener("DOMContentLoaded", () => {
   const alphabetFilter = document.getElementById("alphabet-filter");
   const resultsContainer = document.createElement("div");
   resultsContainer.className = "results-container";
 
-  //
-
-
-
+  // get result box ready that the genera will populate
   const resultsBox = document.createElement("div");
   resultsBox.id = "results-box";
   resultsBox.className = "results-box";
@@ -347,6 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
   resultsContainer.appendChild(resultsBox);
   document.body.appendChild(resultsContainer);
 
+//get the letter the user wants
   if (alphabetFilter) {
     alphabetFilter.addEventListener("click", async (event: Event) => {
       const target = event.target as HTMLElement;
@@ -364,18 +364,14 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-
-        // Hide viewer + info panel
+        // Hide viewer + info panel to make more beautiful
         hideViewerAndInfo();
-
-
-
-
 
         // Get the checkbox state for whether to include genera with is_type
         const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
         const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
+        // Now we call the API using get.generaByLetter(letter)
         try {
           const genera = await DefaultService.generaByLetter(letter, is_include_if_genus_is_type);
           resultsBox.innerHTML = "";
@@ -407,8 +403,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }); //
 
-//ToDo: filter is_type species from this species fetch
-//
+// from the last step we have all the genera filled. once clicked we want to return the species.
+//ToDo: filter is_type species from this species fetch #issue 16
 async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
   console.log(`Fetching species for genus ID: ${genusId}`);
   try {
@@ -423,18 +419,19 @@ async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
 
     speciesContainer.innerHTML = "";
 
-    // Always add the "ALL" option
+    // Always add the "ALL" option, basically the same as selecting 'All' from the dropdown
     const allOption = document.createElement("div");
     allOption.className = "species-item all-option";
     allOption.innerHTML = `<strong>ALL</strong>`;
     allOption.addEventListener("click", () => {
         showViewerAndInfo();
+        // Here is where the the thumbnails are fetced
       showThumbnails(null, genusId, null);
     });
     speciesContainer.appendChild(allOption);
 
 
-    // If there are species, add them
+    // If the user doesnt select all insetad they want a specific species
     if (speciesList && speciesList.length > 0) {
       speciesList.forEach((species: { id: string; name: string }) => {
         const speciesDiv = document.createElement("div");
@@ -443,6 +440,7 @@ async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
 
         speciesDiv.addEventListener("click", async () => {
           speciesContainer.innerHTML = ""; // Clear the species list
+          // Here is where the call happens
           showThumbnails(species.id, null, null);
         });
 

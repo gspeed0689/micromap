@@ -8,8 +8,7 @@ from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
 from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
-
-
+#Note many of these functions are written but not used
 cors_origins = [
     "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)
     "http://localhost:8001",
@@ -39,6 +38,7 @@ async def root():
 
 
 @app.get("/items/")
+
 async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
@@ -54,6 +54,17 @@ async def items(family: Optional[str] = Query(default=None),
                 is_include_if_species_is_type: bool = Query(default = True)
                 ) -> List[Item]:
     """
+    Use:
+    This function get the items we use to show the thumbnails
+    users arguments specified by the user.
+    The function is returns according to the highest taxonomic detail specified by the user
+        species
+        genus
+        family
+
+    Offset and typesetting are performed here before the get_items function is called
+
+    Expaination of params:
     Handles a new query for pollen images.
 
     :param family: A specific pollen family.
@@ -87,19 +98,20 @@ async def items(family: Optional[str] = Query(default=None),
         # TODO: Search on database level.
         pass
 
-    # TODO: return a dictionary with pollen id as key and a dictionary with pollen-info as value. The pollen info
-    #  contains a low-resolution image, taxonomic info and study info. Other info can be queried using the pollen id.
     return {}
 
 
+#not used
 @app.get("/categories/")
 async def category() -> List[Category]:
     return repository.get_categories()
 
+#not used
 @app.post("/categories/", status_code=201)
 async def post_category(category: CategoryBase):
     return { "id": repository.add_category(category) }
 
+#not used
 @app.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
 async def put_category(category: Category):
     try:
@@ -108,15 +120,17 @@ async def put_category(category: Category):
         return 404
     return
 
-
+#not used
 @app.get("/families/")
 async def families(category_id: str) -> List[Family]:
     return repository.get_families(category_id)
 
+#not used
 @app.post("/families/", status_code=201)
 async def post_family(family: FamilyBase):
     return { "id": repository.add_family(family) }
 
+#not used
 @app.put("/families/", status_code=200, responses = {404: {"description": "Family does not exist"}})
 async def put_family(family: Family):
     try:
@@ -125,22 +139,26 @@ async def put_family(family: Family):
         return 404
     return
 
-#get Genera for drop down
+
 @app.get("/genera/")
 async def genera(family_id: str, is_include_if_genus_is_type: bool = True) -> List[Dict]:
+    '''
+    Used for alphabetsearch and genera drop down additional argument to not include genera_is_type
+    '''
     return repository.get_genera(family_id, is_include_if_genus_is_type)
 
-
-#made family ID optional. Test for DataTable functionality
+#not use
 @app.get("/genera_for_alphabetical/")
 def get_genera_for_alphabetica():
     data = repository.get_all_genera()  # No need for 'self'
     return data
 
+#not used
 @app.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
     return { "id": repository.add_genus(genus) }
 
+#not used
 @app.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
 async def put_genus(genus: Genus):
     try:
@@ -151,16 +169,18 @@ async def put_genus(genus: Genus):
 
 
 @app.get("/species/")
+
 async def species(genera_id: Optional[str] = None, category_id: Optional[str] = None) -> List[Species]:
+    ''' returns species according to genus_id used in species drop down and alphabetical search'''
     if genera_id:
         return repository.get_species(genera_id)
     if category_id:
         return repository.get_species_for_category(category_id)
-
+#not used
 @app.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
     return { "id": repository.add_species(species) }
-
+#not used
 @app.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
 async def put_species(species: Species):
     try:
@@ -168,17 +188,16 @@ async def put_species(species: Species):
     except EntityDoesNotExistException:
         return 404
     return
-
-
+#not used
 @app.post("/items/")
 async def post_item(item: ItemCreateDTO) -> int:
     repository.add_item(item)
     return 200
-
+#not used
 @app.get("/studies/")
 async def studies(category_id: str) -> List[Study]:
     return repository.get_studies(category_id)
-
+#not used
 @app.post("/studies/", status_code=201)
 async def post_study(study: Study):
     try:
@@ -186,11 +205,11 @@ async def post_study(study: Study):
     except KeyViolationException as e:
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
-
+#not used
 @app.get("/samples/")
 async def samples(study_id: str) -> List[Sample]:
     return repository.get_samples(study_id)
-
+#not used
 @app.post("/samples/", status_code=201)
 async def post_sample(sample: SampleCreateDTO):
     try:
@@ -211,21 +230,20 @@ async def post_slide(slide: SlideCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-#return GENERA by capital first letter
 @app.get("/genera/letter/{letter}")
 async def genera_by_letter(letter: str, is_include_if_genus_is_type: bool = True):
+    '''Return GENERA by capital first letter, for alphabetical search, removes if_genyus_is_type'''
     genera_list = repository.get_genera_by_letter(letter, is_include_if_genus_is_type)
     return genera_list
 
-#return FAMILY by capital first letter
+#not used
 @app.get("/family/letter/{letter}")
 async def family_by_letter(letter: str):
     family_list = repository.get_family_by_letter(letter)
 
     return family_list
 
-#Dashbaord test
-
+#Dashbaord test - functions written for the future.
 #Family
 @app.get("/get_family_count/")
 async def get_family_count_endpoint():

@@ -1,10 +1,17 @@
+ <!-- The goal of this website is to provide two options for users a taxonomic dropdown
+ and an alphabetical search of the genera.
+ The thumbnails appear on a gallery and can be viewed analogous to a microscope using the focus slider
+ The website call functions from main.py, which make API calls using functions-->
+
+
+  <!--id = "gallery" is where the thumbnails live
+  id = 'viewer_container@ is where the viewer lives
+  id = infopanel is where the slide descriptions, slide info lives
+  id -->
+
+
 <!DOCTYPE html>
 <html lang="en">
-  <!-- Maybe not needed?-->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
-
 
 <head>
   <meta charset="UTF-8" />
@@ -48,6 +55,8 @@
 
 <body>
 
+  <!-- The grid-container holds the isreference button, ischeck_genus, is_check_specie, max_results and page
+   if is_reference unchecked then chcek button should be hidden see toggledisappear_is_check in pollenbase.ts-->
   <div class="grid-container">
     <div class="item1">
       <div class="header">
@@ -76,17 +85,8 @@
             <button class="btn" id="toggle-ribbon" >Go to Alphabetical Genera Search</button>
           </div>
         </div>
-
-
-        <!-- Alphabetical Search Button
-      <div class="database-summary">
-        <a href="file:///C:/dev/umc/wwwroot/database_summary_page.html">
-          <button class="btn" id="toggle-ribbon">Summary of pollendatabase</button>
-        </a>
-      </div>
-      -->
-
-                    <!-- MAX RESULTS NAVIGATION-->
+                            <!-- MAX RESULTS NAVIGATION -->
+                               <!-- Pagation works, there is also logic that page cant be less than 1-->
         <div class="max_results_count">
         Max Results
         <input type="number" id="max-results-input" class="input-number" placeholder="Enter a number">
@@ -98,13 +98,13 @@
         <button id="back_button">Previous</button>
         <button id="next_button">Next</button>
         </div>
-        <!-- ADD a refresh button -->
+        <!-- ToDo: This does not actually work .... Refresh button -->
         <button id="refresh-button">Refresh Thumbnails</button>
 
 
 
          <!-- ALPHABET SEARCHBAR NAVIGATION-->
-
+           <!-- Each letter is a button and used an input for get_genera_by_letter -->
       <div class="searchbar">
         <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
         <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
@@ -112,7 +112,7 @@
 
       </div>
 
-      <!-- Alphabetical Search Ribbon (Hidden by Default) -->
+      <!-- Section: Alphabetical Search Ribbon (Hidden by Default) see -->
 
 <div id="alphabet-filter" class="alphabet-filter">
   <button data-letter="A">A</button>
@@ -185,7 +185,7 @@
     </div>
   </div>
 
-
+   <!-- Section: Drop down menu (default) -->
   <!--<script src="js/pollenbase.js" ></script>-->
   <script>
     var element = document.getElementById('family-select');
