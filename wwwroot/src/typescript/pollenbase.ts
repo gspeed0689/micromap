@@ -64,6 +64,7 @@ When family is changed the family_id is returned and used to populate genera
         return;
       console.log('familychange ', JSON.stringify(familySelectBox.value));
       populateGeneraSelect(familySelectBox.value);
+      showThumbnails(null, null, familySelectBox.value)
     }
  /**
 Genera change works, defaults to select an option, or ALL or genera, then populates thumbnails
