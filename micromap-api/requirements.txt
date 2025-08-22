@@ -5,4 +5,4 @@ pydantic-settings~=2.0.3  # Data validation and settings management
 uvicorn~=0.23.2  # Minimal low-level server/application interface
 a2wsgi~=1.7.0  # Required for WSGI support (passenger, gunicorn)
 sqlalchemy~=2.0.23  # SQL interface
-psycopg2~=2.9.9
+psycopg2-binary~=2.9.9

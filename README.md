@@ -22,9 +22,6 @@ Before setting up the development environment, ensure the following software is 
 - [PyCharm (Community Edition)](https://www.jetbrains.com/toolbox-app/)  
 - Python 3.9
 
-### Get the Code
-Clone the `micromap-server` and `micromap-gui` Git repositories.  
-
 ### Set Up a PostgreSQL Docker Container
 A Docker container includes everything needed to run an application (e.g. runtime, system tools, libraries, and
 settings).

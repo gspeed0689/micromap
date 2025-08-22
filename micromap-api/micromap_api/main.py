@@ -1,8 +1,11 @@
+import os
+from hashlib import sha256
 from typing import Optional, List
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, APIRouter
+from fastapi.security import APIKeyHeader
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
@@ -10,21 +13,29 @@ from .postgresqldatarepository import PostgresqlDataRepository
 from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
 
-cors_origins = [
-    "http://localhost:8081",# Development port. Required for Cross-Origin Resource Sharing (CORS)
-    "http://localhost:8001",
-    "*"
-]
-
 def generate_unique_id(route: APIRoute):
     return f"{route.name}"
 
+async def check_api_key(api_key: str = Security(APIKeyHeader(name='x-api-key', auto_error=False))):
+    """
+    Checks if the hash of the provided API key matches the one stored in the .env file.
+    Raises a 401 error (Unauthorized) if it doesn't match.
+    """
+    if api_key is None:
+        raise HTTPException(status_code=401, detail="Missing API Key")
+
+    if sha256(api_key.encode()).hexdigest() != os.getenv("API_KEY_HASH"):
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+
+# Define a public and secure route. The secure route checks the API key with check_api_key.
+public = APIRouter()
+secure = APIRouter(dependencies=[Depends(check_api_key)])
 
 app = FastAPI(generate_unique_id_function=generate_unique_id)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=os.getenv("CORS_ORIGINS", "").split(", "),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,12 +44,12 @@ app.add_middleware(
 repository = PostgresqlDataRepository()
 
 
-@app.get("/")
+@public.get("/")
 async def root():
-    return {"message": "PollenBase API"}
+    return {"message": "MicroMap API"}
 
 
-@app.get("/items/")
+@public.get("/items/")
 async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
@@ -80,15 +91,15 @@ async def items(family: Optional[str] = Query(default=None),
     return {}
 
 
-@app.get("/categories/")
+@public.get("/categories/")
 async def category() -> List[Category]:
     return repository.get_categories()
 
-@app.post("/categories/", status_code=201)
+@secure.post("/categories/", status_code=201)
 async def post_category(category: CategoryBase):
     return { "id": repository.add_category(category) }
 
-@app.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
+@secure.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
 async def put_category(category: Category):
     try:
         repository.update_category(category)
@@ -97,15 +108,15 @@ async def put_category(category: Category):
     return
 
 
-@app.get("/families/")
+@public.get("/families/")
 async def families(category_id: str) -> List[Family]:
     return repository.get_families(category_id)
 
-@app.post("/families/", status_code=201)
+@secure.post("/families/", status_code=201)
 async def post_family(family: FamilyBase):
     return { "id": repository.add_family(family) }
 
-@app.put("/families/", status_code=200, responses = {404: {"description": "Family does not exist"}})
+@secure.put("/families/", status_code=200, responses = {404: {"description": "Family does not exist"}})
 async def put_family(family: Family):
     try:
         repository.update_family(family)
@@ -114,16 +125,15 @@ async def put_family(family: Family):
     return
 
 
-
-@app.get("/genera/")
+@public.get("/genera/")
 async def genera(family_id: str) -> List[Genus]:
     return repository.get_genera(family_id)
 
-@app.post("/genera/", status_code=201)
+@secure.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
     return { "id": repository.add_genus(genus) }
 
-@app.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
+@secure.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
 async def put_genus(genus: Genus):
     try:
         repository.update_genus(genus)
@@ -132,18 +142,18 @@ async def put_genus(genus: Genus):
     return
 
 
-@app.get("/species/")
+@public.get("/species/")
 async def species(genera_id: Optional[str] = None, category_id: Optional[str] = None) -> List[Species]:
     if genera_id:
         return repository.get_species(genera_id)
     if category_id:
         return repository.get_species_for_category(category_id)
 
-@app.post("/species/", status_code=201)
+@secure.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
     return { "id": repository.add_species(species) }
 
-@app.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
+@secure.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
 async def put_species(species: Species):
     try:
         repository.update_species(species)
@@ -152,16 +162,16 @@ async def put_species(species: Species):
     return
 
 
-@app.post("/items/")
+@secure.post("/items/")
 async def post_item(item: ItemCreateDTO) -> int:
     repository.add_item(item)
     return 200
 
-@app.get("/studies/")
+@public.get("/studies/")
 async def studies(category_id: str) -> List[Study]:
     return repository.get_studies(category_id)
 
-@app.post("/studies/", status_code=201)
+@secure.post("/studies/", status_code=201)
 async def post_study(study: Study):
     try:
         repository.add_study(study)
@@ -169,11 +179,11 @@ async def post_study(study: Study):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-@app.get("/samples/")
+@public.get("/samples/")
 async def samples(study_id: str) -> List[Sample]:
     return repository.get_samples(study_id)
 
-@app.post("/samples/", status_code=201)
+@secure.post("/samples/", status_code=201)
 async def post_sample(sample: SampleCreateDTO):
     try:
         repository.add_sample(sample)
@@ -181,11 +191,11 @@ async def post_sample(sample: SampleCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-@app.get("/slides/")
+@public.get("/slides/")
 async def slides(sample_id: str) -> List[Slide]:
     return repository.get_slides(sample_id)
 
-@app.post("/slides/", status_code=201)
+@secure.post("/slides/", status_code=201)
 async def post_slide(slide: SlideCreateDTO):
     try:
         repository.add_slide(slide)
@@ -194,7 +204,7 @@ async def post_slide(slide: SlideCreateDTO):
     return
 
 #return GENERA by capital first letter
-@app.get("/genera/letter/{letter}")
+@public.get("/genera/letter/{letter}")
 async def genera_by_letter(letter: str):
     genera_list = repository.get_genera_by_letter(letter)
     return [
@@ -203,7 +213,7 @@ async def genera_by_letter(letter: str):
     ]
 
 #return FAMILY by capital first letter
-@app.get("/family/letter/{letter}")
+@public.get("/family/letter/{letter}")
 async def family_by_letter(letter: str):
     family_list = repository.get_family_by_letter(letter)
 
@@ -214,3 +224,5 @@ async def family_by_letter(letter: str):
 #slide get/post
 
 
+app.include_router(public)
+app.include_router(secure)
