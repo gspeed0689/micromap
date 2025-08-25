@@ -100,3 +100,12 @@ To compile the typescript source files to a javascript bundle, run this command 
 npx webpack
 ```
 *You can add **--watch** to hot rebuild based on changes in the source files.*
+
+### Configure and run the website
+The API address and catalog id are configured in the file `config.js` in `wwwroot`.
+
+Use a lightweight static server to serve the website:
+```shell
+npm install -g serve
+serve .
+```

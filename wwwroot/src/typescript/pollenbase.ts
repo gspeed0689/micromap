@@ -3,8 +3,9 @@ import { Viewer } from './viewer';
 import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
 
-OpenAPI.BASE = 'http://localhost:8000';
-const CATALOGID = 'b788163e-cc97-4333-85f0-f7de210fe416';
+
+OpenAPI.BASE = API_BASE_URL;
+
 let viewer = null;
 let currentItems: Array<Item> = null;
 let families: Array<Family> = null;
@@ -18,7 +19,7 @@ export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
   let selectedid = null;
 
-  const families = await DefaultService.families(CATALOGID);
+  const families = await DefaultService.families(CATALOG_ID);
 
   for (const family of families) {
     if (selectedid == null)
@@ -131,7 +132,7 @@ export async function thumbnailSelected(c: string) {
 
 async function showThumbnails(genus_id: string, family_id: string) {
   if (families == null)
-    families = await DefaultService.families(CATALOGID);
+    families = await DefaultService.families(CATALOG_ID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
