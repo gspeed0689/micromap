@@ -11,8 +11,8 @@ from .models import settings #used to get max_results as defined in .env
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
-from .ormmodels import ORMCategory, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
-from .models import ItemBase, CategoryBase, Category, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
+from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
+from .models import ItemBase, CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
 import random # to randomise family and genus queries
 
 
@@ -28,15 +28,15 @@ class PostgresqlDataRepository:
     def create_database(self):
         Base.metadata.create_all(self.engine)
 
-    # Categories
+    # Catalogs
 
-    def get_categories(self) -> List[ORMCategory]:
+    def get_catalogs(self) -> List[ORMCatalog]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMCategory)).all()
+            return session.scalars(select(ORMCatalog)).all()
 
-    def add_category(self, new_category: CategoryBase)-> UUID:
+    def add_catalog(self, new_catalog: CatalogBase)-> UUID:
         new_uuid = uuid4()
-        db_item = ORMCategory(id = new_uuid, name = new_category.name)
+        db_item = ORMCatalog(id = new_uuid, name = new_catalog.name)
 
         with Session(self.engine) as session:
             session.add(db_item)
@@ -44,24 +44,24 @@ class PostgresqlDataRepository:
 
         return new_uuid
 
-    def update_category(self, updated_category: Category):
+    def update_catalog(self, updated_catalog: Catalog):
         with Session(self.engine) as session:
             try:
-                category = session.scalars(select(ORMCategory).where(ORMCategory.id == updated_category.id)).one()
-                category.name = updated_category.name
+                catalog = session.scalars(select(ORMCatalog).where(ORMCatalog.id == updated_catalog.id)).one()
+                catalog.name = updated_catalog.name
                 session.commit()
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
 
     # Families
 
-    def get_families(self, category_id: str) -> List[ORMFamily]:
+    def get_families(self, catalog_id: str) -> List[ORMFamily]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMFamily).where(ORMFamily.category_id == category_id).order_by(ORMFamily.name)).all()
+            return session.scalars(select(ORMFamily).where(ORMFamily.catalog_id == catalog_id).order_by(ORMFamily.name)).all()
 
     def add_family(self, new_family: FamilyBase)-> UUID:
         new_uuid = uuid4()
-        db_item = ORMFamily(id = new_uuid, name = new_family.name, category_id = new_family.category_id)
+        db_item = ORMFamily(id = new_uuid, name = new_family.name, catalog_id = new_family.catalog_id)
 
         with Session(self.engine) as session:
             session.add(db_item)
@@ -74,7 +74,7 @@ class PostgresqlDataRepository:
             try:
                 family = session.scalars(select(ORMFamily).where(ORMFamily.id == updated_family.id)).one()
                 family.name = updated_family.name
-                family.category_id = updated_family.category_id
+                family.catalog_id = updated_family.catalog_id
                 session.commit()
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
@@ -134,17 +134,17 @@ class PostgresqlDataRepository:
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
 
-    def get_species_for_category(self, category_id: str) -> List[ORMSpecies]:
+    def get_species_for_catalog(self, catalog_id: str) -> List[ORMSpecies]:
         with Session(self.engine) as session:
-            all_families = ( select(ORMFamily.id).where(ORMFamily.category_id == category_id).scalar_subquery() )
+            all_families = ( select(ORMFamily.id).where(ORMFamily.catalog_id == catalog_id).scalar_subquery() )
             all_genera = ( select(ORMGenus.id).where(ORMGenus.family_id.in_(all_families)).scalar_subquery() )
             return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id.in_(all_genera)).order_by(ORMSpecies.name)).all()
 
     # Studies
 
-    def get_studies(self, category_id: str) -> List[ORMStudy]:
+    def get_studies(self, catalog_id: str) -> List[ORMStudy]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMStudy).where(ORMStudy.category_id == category_id)).all()
+            return session.scalars(select(ORMStudy).where(ORMStudy.catalog_id == catalog_id)).all()
 
     def add_study(self, new_study: Study):
         try:
@@ -153,7 +153,7 @@ class PostgresqlDataRepository:
                 description = new_study.description,
                 location = new_study.location,
                 remarks = new_study.remarks,
-                category_id = new_study.category_id)
+                catalog_id = new_study.catalog_id)
 
             with Session(self.engine) as session:
                 session.add(db_item)

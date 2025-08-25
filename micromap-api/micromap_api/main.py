@@ -10,7 +10,7 @@ from fastapi.security import APIKeyHeader
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CategoryBase, Category, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
+from .models import CatalogBase, Catalog, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
 
 
 def generate_unique_id(route: APIRoute):
@@ -92,26 +92,26 @@ async def items(family: Optional[str] = Query(default=None),
     return {}
 
 
-@public.get("/categories/")
-async def category() -> List[Category]:
-    return repository.get_categories()
+@public.get("/catalogs/")
+async def catalog() -> List[Catalog]:
+    return repository.get_catalogs()
 
-@secure.post("/categories/", status_code=201)
-async def post_category(category: CategoryBase):
-    return { "id": repository.add_category(category) }
+@secure.post("/catalogs/", status_code=201)
+async def post_catalog(catalog: CatalogBase):
+    return { "id": repository.add_catalog(catalog) }
 
-@secure.put("/categories/", status_code=200, responses = {404: {"description": "Category does not exist"}})
-async def put_category(category: Category):
+@secure.put("/catalogs/", status_code=200, responses = {404: {"description": "Catalog does not exist"}})
+async def put_catalog(catalog: Catalog):
     try:
-        repository.update_category(category)
+        repository.update_catalog(catalog)
     except EntityDoesNotExistException:
         return 404
     return
 
 
 @public.get("/families/")
-async def families(category_id: str) -> List[Family]:
-    return repository.get_families(category_id)
+async def families(catalog_id: str) -> List[Family]:
+    return repository.get_families(catalog_id)
 
 @secure.post("/families/", status_code=201)
 async def post_family(family: FamilyBase):
@@ -144,11 +144,11 @@ async def put_genus(genus: Genus):
 
 
 @public.get("/species/")
-async def species(genera_id: Optional[str] = None, category_id: Optional[str] = None) -> List[Species]:
+async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> List[Species]:
     if genera_id:
         return repository.get_species(genera_id)
-    if category_id:
-        return repository.get_species_for_category(category_id)
+    if catalog_id:
+        return repository.get_species_for_catalog(catalog_id)
 
 @secure.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
@@ -169,8 +169,8 @@ async def post_item(item: ItemCreateDTO) -> int:
     return 200
 
 @public.get("/studies/")
-async def studies(category_id: str) -> List[Study]:
-    return repository.get_studies(category_id)
+async def studies(catalog_id: str) -> List[Study]:
+    return repository.get_studies(catalog_id)
 
 @secure.post("/studies/", status_code=201)
 async def post_study(study: Study):
