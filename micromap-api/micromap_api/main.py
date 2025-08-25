@@ -42,6 +42,7 @@ app.add_middleware(
 )
 
 repository = PostgresqlDataRepository()
+repository.create_database()  # Create all tables. Will not attempt to recreate tables already present.
 
 
 @public.get("/")
