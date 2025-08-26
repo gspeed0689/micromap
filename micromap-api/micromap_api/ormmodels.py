@@ -43,6 +43,7 @@ class ORMGenus(Base):
     family_id: Mapped[UUID] = mapped_column(ForeignKey("family.id"), nullable=False)
     family: Mapped["ORMFamily"] = relationship(back_populates="genera")
     species: Mapped[List["ORMSpecies"]]= relationship(back_populates="genus")
+    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False) #ToDo: check if this should be nullable
 
 
 class ORMSpecies(Base):
@@ -53,6 +54,7 @@ class ORMSpecies(Base):
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"))
     genus: Mapped["ORMGenus"] = relationship(back_populates="species")
     subspecies: Mapped[List["ORMSubSpecies"]]= relationship(back_populates="species")
+    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False) #ToDo: check if this should be nullable
 
 
 class ORMSubSpecies(Base):
@@ -122,3 +124,4 @@ class ORMItem(Base):
     slide: Mapped["ORMSlide"] = relationship("ORMSlide", lazy='subquery')
 
     voxel_width: Mapped[float] = mapped_column(Float, nullable=False)
+

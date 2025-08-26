@@ -1,3 +1,15 @@
+ <!-- The goal of this website is to provide two options for users a taxonomic dropdown
+ and an alphabetical search of the genera.
+ The thumbnails appear on a gallery and can be viewed analogous to a microscope using the focus slider
+ The website call functions from main.py, which make API calls using functions-->
+
+
+  <!--id = "gallery" is where the thumbnails live
+  id = 'viewer_container@ is where the viewer lives
+  id = infopanel is where the slide descriptions, slide info lives
+  id -->
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -44,18 +56,97 @@
 
 <body>
 
+  <!-- The grid-container holds the isreference button, ischeck_genus, is_check_specie, max_results and page
+   if is_reference unchecked then chcek button should be hidden see toggledisappear_is_check in pollenbase.ts-->
   <div class="grid-container">
     <div class="item1">
       <div class="header">
-        <h2>MicroMap - Pollen reference database</h2>
+         <div style="display: flex; align-items: center;">
+          <label>
+            <input type="checkbox" id="includeNonReference" checked> Include Non-Reference Material
+
+                    <!-- IS_include_genera_type and Is_include_species_type -->
+          <div id="make_genus_and_species_IS_TYPE_buttons" style="margin-left: 20px; margin-top: 10px;">
+            <label>
+              <input type="checkbox" id="includeGeneraType">
+              Include Genera-TYPE
+            </label>
+            <br>
+            <label>
+              <input type="checkbox" id="includeSpeciesType">
+              Include Species-TYPE
+            </label>
+          </div>
+
+
+
+          </label>
+          <!-- Database Summary next to the checkbox -->
+          <div class="alphabetical-search" style="margin-left: 10px;">
+            <button class="btn" id="toggle-ribbon" >Go to Alphabetical Genera Search</button>
+          </div>
+        </div>
+                            <!-- MAX RESULTS NAVIGATION -->
+                               <!-- Pagation works, there is also logic that page cant be less than 1-->
+        <div class="max_results_count">
+        Max Results
+        <input type="number" id="max-results-input" class="input-number" placeholder="Enter a number">
       </div>
+             <!-- PAGE NUMBER NEXT AND PREVIOUS -->
+        <div class="pagination-controls">
+         <span class="page-number-text">Page number:</span>
+          <span id="page-number">1</span>
+        <button id="back_button">Previous</button>
+        <button id="next_button">Next</button>
+        </div>
+        <!-- ToDo: This does not actually work .... Refresh button -->
+        <button id="refresh-button">Refresh Thumbnails</button>
+
+
+
+         <!-- ALPHABET SEARCHBAR NAVIGATION-->
+           <!-- Each letter is a button and used an input for get_genera_by_letter -->
       <div class="searchbar">
         <span class="font-bold">Family :</span> <select class="btn" id="family-select"></select>
         <span class="font-bold">Genus :</span> <select class="btn" id="genera-select"></select>
         <span class="font-bold">Species :</span> <select class="btn" id="species-select"></select>
-        <span class="font-bold">Sub-Species :</span> <select class="btn" id="sub-species-select"></select>
+
       </div>
+
+      <!-- Section: Alphabetical Search Ribbon (Hidden by Default) see -->
+
+<div id="alphabet-filter" class="alphabet-filter">
+  <button data-letter="A">A</button>
+  <button data-letter="B">B</button>
+  <button data-letter="C">C</button>
+  <button data-letter="D">D</button>
+  <button data-letter="E">E</button>
+  <button data-letter="F">F</button>
+  <button data-letter="G">G</button>
+  <button data-letter="H">H</button>
+  <button data-letter="I">I</button>
+  <button data-letter="J">J</button>
+  <button data-letter="K">K</button>
+  <button data-letter="L">L</button>
+  <button data-letter="M">M</button>
+  <button data-letter="N">N</button>
+  <button data-letter="O">O</button>
+  <button data-letter="P">P</button>
+  <button data-letter="Q">Q</button>
+  <button data-letter="R">R</button>
+  <button data-letter="S">S</button>
+  <button data-letter="T">T</button>
+  <button data-letter="U">U</button>
+  <button data-letter="V">V</button>
+  <button data-letter="W">W</button>
+  <button data-letter="X">X</button>
+  <button data-letter="Y">Y</button>
+  <button data-letter="Z">Z</button>
+</div>
     </div>
+  </div>
+
+
 
     <div class="item2 wrapper">
         <div class="image-gallery" id="gallery">
@@ -95,7 +186,7 @@
     </div>
   </div>
 
-
+   <!-- Section: Drop down menu (default) -->
   <!--<script src="js/pollenbase.js" ></script>-->
   <script>
     var element = document.getElementById('family-select');
@@ -113,6 +204,24 @@
 
     PollenBase.populateFamilySelect();
     PollenBase.onFamilyChange();
+
+    <!--<Alpabetical search option>-->
+     document.getElementById("toggle-ribbon").addEventListener("click", function () {
+    var ribbon = document.getElementById("alphabet-filter");
+    var dropdowns = document.querySelector(".searchbar");
+
+    if (ribbon.style.display === "none" || ribbon.style.display === "") {
+      ribbon.style.display = "block";
+      dropdowns.style.display = "none";
+    } else {
+      ribbon.style.display = "none";
+      dropdowns.style.display = "block";
+    }
+  });
+
+  // Hide the ribbon by default
+  document.getElementById("alphabet-filter").style.display = "none";
+
   </script>
 </body>
 
