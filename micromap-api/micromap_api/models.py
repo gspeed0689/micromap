@@ -3,10 +3,10 @@ from pydantic import BaseModel
 from uuid import UUID
 from pydantic_settings import BaseSettings
 
-class CategoryBase(BaseModel):
+class CatalogBase(BaseModel):
     name: str
 
-class Category(CategoryBase):
+class Catalog(CatalogBase):
     id: UUID
 
     class Config:
@@ -15,7 +15,7 @@ class Category(CategoryBase):
 
 class FamilyBase(BaseModel):
     name: str
-    category_id: UUID
+    catalog_id: UUID
 
 class Family(FamilyBase):
     id: UUID
@@ -67,7 +67,7 @@ class StudyBase(BaseModel):
     description: Optional[str]
     location: Optional[str]
     remarks: Optional[str]
-    category_id: UUID
+    catalog_id: UUID
 
 class Study(StudyBase):
     id: UUID

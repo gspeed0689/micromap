@@ -7,12 +7,12 @@ class Base(DeclarativeBase):
     pass
 
 
-class ORMCategory(Base):
-    __tablename__ = "category"
+class ORMCatalog(Base):
+    __tablename__ = "catalog"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
 
-    # Name of the category
+    # Name of the catalog
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
 
@@ -25,8 +25,8 @@ class ORMFamily(Base):
     # Name of the family
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
-    # Reference to the Category that this Family belongs to
-    category_id: Mapped[UUID] = mapped_column(ForeignKey("category.id"), nullable=False)
+    # Reference to the Catalog that this Family belongs to
+    catalog_id: Mapped[UUID] = mapped_column(ForeignKey("catalog.id"), nullable=False)
 
     # List of genera that are in this family
     genera: Mapped[List["ORMGenus"]] = relationship(back_populates="family")
@@ -75,8 +75,8 @@ class ORMStudy(Base):
     is_reference: Mapped[Boolean] = mapped_column(Boolean, nullable=False) #EDWIN CHECK: SHOULD THIS BE NULLABLE OR NOT?
 
 
-    # Reference to the Category that this Study belongs to
-    category_id: Mapped[UUID] = mapped_column(ForeignKey("category.id"), nullable=False)
+    # Reference to the Catalog that this Study belongs to
+    catalog_id: Mapped[UUID] = mapped_column(ForeignKey("catalog.id"), nullable=False)
 
 
 class ORMSample(Base):

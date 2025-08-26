@@ -22,17 +22,24 @@ Before setting up the development environment, ensure the following software is 
 - [PyCharm (Community Edition)](https://www.jetbrains.com/toolbox-app/)  
 - Python 3.9
 
-### Get the Code
-Clone the `micromap-server` and `micromap-gui` Git repositories.  
+### Environment files
+The `.env` contains the database and API server configuration. At least set a new database password and API key hash.
+
+An SHA-256 hash for `api_key` can be calculated with:
+```python
+from hashlib import sha256
+sha256(api_key.encode()).hexdigest()
+```
 
 ### Set Up a PostgreSQL Docker Container
 A Docker container includes everything needed to run an application (e.g. runtime, system tools, libraries, and
 settings).
 To run the PostgreSQL container as configured in `docker-compose.yml`, change directory to where this file located is and run:
 ```shell
-docker-compose up -d
+docker-compose --env-file .env up -d
 ```
-**ToDo** preparing the database for the first time.
+When run for the first time, the `micromap` database will be empty. The REST API will create new tables and relations.
+It will not attempt to recreate tables already present.
 
 ### Run the REST API
 Optionally create and start a [Python virtual environment](https://docs.python.org/3/library/venv.html) for this project.   
@@ -93,3 +100,12 @@ To compile the typescript source files to a javascript bundle, run this command 
 npx webpack
 ```
 *You can add **--watch** to hot rebuild based on changes in the source files.*
+
+### Configure and run the website
+The API address and catalog id are configured in the file `config.js` in `wwwroot`.
+
+Use a lightweight static server to serve the website:
+```shell
+npm install -g serve
+serve .
+```
