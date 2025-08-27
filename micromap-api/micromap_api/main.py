@@ -1,6 +1,6 @@
 import os
 from hashlib import sha256
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from fastapi import FastAPI, Query, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +97,6 @@ async def items(family: Optional[str] = Query(default=None),
     # Calculate offset
     offset = (page - 1) * type_user_max_results
 
-
     # Fetch results based on available filters
     if species:
         return repository.get_items(species_id=species, user_max_results = type_user_max_results, include_non_reference=is_include_non_reference_check, offset =offset, is_include_if_species_is_type = is_include_if_species_is_type)
@@ -147,7 +146,7 @@ async def put_family(family: Family):
     return
 
 
-@app.get("/genera/")
+@public.get("/genera/")
 async def genera(family_id: str, is_include_if_genus_is_type: bool = True) -> List[Dict]:
     '''
     Used for alphabetsearch and genera drop down additional argument to not include genera_is_type
@@ -155,18 +154,18 @@ async def genera(family_id: str, is_include_if_genus_is_type: bool = True) -> Li
     return repository.get_genera(family_id, is_include_if_genus_is_type)
 
 #not use
-@app.get("/genera_for_alphabetical/")
+@public.get("/genera_for_alphabetical/")
 def get_genera_for_alphabetica():
     data = repository.get_all_genera()  # No need for 'self'
     return data
 
 #not used
-@app.post("/genera/", status_code=201)
+@secure.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
     return { "id": repository.add_genus(genus) }
 
 #not used
-@app.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
+@secure.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
 async def put_genus(genus: Genus):
     try:
         repository.update_genus(genus)
@@ -175,20 +174,20 @@ async def put_genus(genus: Genus):
     return
 
 
-@app.get("/species/")
+@public.get("/species/")
 
-async def species(genera_id: Optional[str] = None, category_id: Optional[str] = None) -> List[Species]:
+async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> List[Species]:
     ''' returns species according to genus_id used in species drop down and alphabetical search'''
     if genera_id:
         return repository.get_species(genera_id)
-    if category_id:
-        return repository.get_species_for_category(category_id)
+    if catalog_id:
+        return repository.get_species_for_catalog(catalog_id)
 #not used
-@app.post("/species/", status_code=201)
+@secure.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
     return { "id": repository.add_species(species) }
 #not used
-@app.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
+@secure.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
 async def put_species(species: Species):
     try:
         repository.update_species(species)
@@ -238,14 +237,14 @@ async def post_slide(slide: SlideCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-@app.get("/genera/letter/{letter}")
+@public.get("/genera/letter/{letter}")
 async def genera_by_letter(letter: str, is_include_if_genus_is_type: bool = True):
     '''Return GENERA by capital first letter, for alphabetical search, removes if_genyus_is_type'''
     genera_list = repository.get_genera_by_letter(letter, is_include_if_genus_is_type)
     return genera_list
 
 #not used
-@app.get("/family/letter/{letter}")
+@public.get("/family/letter/{letter}")
 async def family_by_letter(letter: str):
     family_list = repository.get_family_by_letter(letter)
 
@@ -253,18 +252,18 @@ async def family_by_letter(letter: str):
 
 #Dashbaord test - functions written for the future.
 #Family
-@app.get("/get_family_count/")
+@public.get("/get_family_count/")
 async def get_family_count_endpoint():
     num =  repository.get_family_count()
     return {"family_count": num}
 #Genera
-@app.get("/get_genera_count/")
+@public.get("/get_genera_count/")
 async def get_genera_count_endpoint():
     num =  repository.get_genera_count()
     return {"Genera": num}
 
 #Species
-@app.get("/get_species_count/")
+@public.get("/get_species_count/")
 async def get_species_count_endpoint():
     num =  repository.get_species_count()
     return {"species_count": num}

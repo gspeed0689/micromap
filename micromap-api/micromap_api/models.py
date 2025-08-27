@@ -67,7 +67,7 @@ class StudyBase(BaseModel):
     description: Optional[str]
     location: Optional[str]
     remarks: Optional[str]
-    category_id: UUID
+    catalog_id: UUID
     is_reference: bool
 
 

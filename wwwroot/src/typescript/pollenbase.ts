@@ -242,7 +242,7 @@ async function showThumbnails(
   typeUserMaxResults?: number,
   page =1
 ) {
-  if (!families) families = await DefaultService.families(CATALOGID);
+  if (!families) families = await DefaultService.families(CATALOG_ID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {

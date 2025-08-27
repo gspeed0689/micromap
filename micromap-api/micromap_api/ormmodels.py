@@ -43,7 +43,7 @@ class ORMGenus(Base):
     family_id: Mapped[UUID] = mapped_column(ForeignKey("family.id"), nullable=False)
     family: Mapped["ORMFamily"] = relationship(back_populates="genera")
     species: Mapped[List["ORMSpecies"]]= relationship(back_populates="genus")
-    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False) #ToDo: check if this should be nullable
+    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 
 class ORMSpecies(Base):
@@ -54,7 +54,7 @@ class ORMSpecies(Base):
     genus_id: Mapped[UUID] = mapped_column(ForeignKey("genus.id"))
     genus: Mapped["ORMGenus"] = relationship(back_populates="species")
     subspecies: Mapped[List["ORMSubSpecies"]]= relationship(back_populates="species")
-    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False) #ToDo: check if this should be nullable
+    is_type: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 
 class ORMSubSpecies(Base):
@@ -74,7 +74,7 @@ class ORMStudy(Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
     location: Mapped[str] = mapped_column(String, nullable=True)
     remarks: Mapped[str] = mapped_column(String, nullable=True)
-    is_reference: Mapped[Boolean] = mapped_column(Boolean, nullable=False) #EDWIN CHECK: SHOULD THIS BE NULLABLE OR NOT?
+    is_reference: Mapped[Boolean] = mapped_column(Boolean, nullable=False)
 
 
     # Reference to the Catalog that this Study belongs to
