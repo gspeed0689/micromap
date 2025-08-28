@@ -238,10 +238,7 @@ export async function thumbnailSelected(c: string) {
 async function showThumbnails(
   species_id: string | null,
   genus_id: string | null,
-  family_id: string | null,
-  typeUserMaxResults?: number,
-  page =1
-) {
+  family_id: string | null) {
   if (!families) families = await DefaultService.families(CATALOG_ID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
@@ -254,33 +251,33 @@ async function showThumbnails(
   const includeNonReference = checkbox ? checkbox.checked : true; //
 
   // Add const for if is_genus_check
-const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
-const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+  const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
+  const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
-    // Add const for if is_species_check
-const speciesTypeCheckbox = document.getElementById('includeSpeciesType') as HTMLInputElement | null;
-const is_include_if_species_is_type = speciesTypeCheckbox ? speciesTypeCheckbox.checked : true;
+  // Add const for if is_species_check
+  const speciesTypeCheckbox = document.getElementById('includeSpeciesType') as HTMLInputElement | null;
+  const is_include_if_species_is_type = speciesTypeCheckbox ? speciesTypeCheckbox.checked : true;
 
 
 
- // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
+  // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
   const maxResultsInput = document.getElementById('max-results-input') as HTMLInputElement | null;
   const maxResultsRaw = maxResultsInput?.value?.trim();
   const maxResults = maxResultsRaw && !isNaN(parseInt(maxResultsRaw)) ? parseInt(maxResultsRaw) : 10; // default to 10
-
+  console.log(maxResults)
 
  // Get value for page
-  const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;
+ // const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;
 
  try {
      let currentItems;
 
   if (species_id) {
-    currentItems = await DefaultService.items(null, null, species_id, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, undefined, is_include_if_species_is_type);
+    currentItems = await DefaultService.items(null, null, species_id, undefined, is_include_if_species_is_type, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   } else if (genus_id) {
-    currentItems = await DefaultService.items(null, genus_id, null, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, is_include_if_genus_is_type, undefined);
+    currentItems = await DefaultService.items(null, genus_id, null, is_include_if_genus_is_type, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   } else {
-    currentItems = await DefaultService.items(family_id, null, null, includeNonReference, maxResults, undefined, undefined, undefined, undefined, 'abundance', currentPage, undefined, undefined);
+    currentItems = await DefaultService.items(family_id, null, null, undefined, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   }
 
     if (!currentItems || currentItems.length === 0) {

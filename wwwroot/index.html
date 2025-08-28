@@ -85,12 +85,18 @@
           <div class="alphabetical-search" style="margin-left: 10px;">
             <button class="btn" id="toggle-ribbon" >Go to Alphabetical Genera Search</button>
           </div>
-        </div>
+      </div>
                             <!-- MAX RESULTS NAVIGATION -->
                                <!-- Pagation works, there is also logic that page cant be less than 1-->
-        <div class="max_results_count">
-        Max Results
-        <input type="number" id="max-results-input" class="input-number" placeholder="Enter a number">
+      <div class="max_results_count">
+        <label for="max-results-input">Max Results</label>
+        <select class="btn" id="max-results-input">
+          <option value=500>500</option>
+          <option value=200>200</option>
+          <option value=100>100</option>
+          <option value=50>50</option>
+          <option value=20>20</option>
+        </select>
       </div>
              <!-- PAGE NUMBER NEXT AND PREVIOUS -->
         <div class="pagination-controls">

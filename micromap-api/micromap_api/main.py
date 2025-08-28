@@ -10,7 +10,8 @@ from fastapi.security import APIKeyHeader
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import CatalogBase, Catalog, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO, Item, settings, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO
+from .models import (CatalogBase, Catalog, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO,
+                     Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO)
 
 
 def generate_unique_id(route: APIRoute):
@@ -49,21 +50,19 @@ repository.create_database()  # Create all tables. Will not attempt to recreate 
 async def root():
     return {"message": "MicroMap API"}
 
-
 @public.get("/items/")
 async def items(family: Optional[str] = Query(default=None),
                 genus: Optional[str] = Query(default=None),
                 species: Optional[str] = Query(default=None),
-                is_include_non_reference_check: bool = Query(default=True),
-                max_results: int = settings.max_results,
-                type_user_max_results: int = Query(default=100),
+                include_genus_type: bool = Query(default=True),
+                include_species_type: bool = Query(default=True),
+                reference_only: bool = Query(default=False),
                 study: Optional[str] = Query(default=None),
                 sample: Optional[str] = Query(default=None),
                 slide: Optional[str] = Query(default=None),
-                order: str = settings.default_order,
-                page: int = Query(default=1),
-                is_include_if_genus_is_type: bool = Query(default=True),
-                is_include_if_species_is_type: bool = Query(default = True)
+                order: str = os.environ.get('DEFAULT_ORDER', 'abundance'),
+                max_results: int = Query(default=100),
+                page: int = Query(default=1)
                 ) -> List[Item]:
     """
     Use:
@@ -90,26 +89,37 @@ async def items(family: Optional[str] = Query(default=None),
     :return: A dictionary with matches.
     """
     # Build search query
-    #ensure the user doesnt put in a number greater than what is allowed in env settings
-    if type_user_max_results > max_results:
-        type_user_max_results = max_results#
+    max_results = min(int(os.environ.get('MAX_RESULTS', 500)), max_results)  # Clip to MAX_RESULTS
 
     # Calculate offset
-    offset = (page - 1) * type_user_max_results
+    offset = (page - 1) * max_results
 
     # Fetch results based on available filters
     if species:
-        return repository.get_items(species_id=species, user_max_results = type_user_max_results, include_non_reference=is_include_non_reference_check, offset =offset, is_include_if_species_is_type = is_include_if_species_is_type)
-        pass
+        return repository.get_items(
+            species_id=species,
+            max_results=max_results,
+            reference_only=reference_only,
+            offset=offset,
+            include_species_type=include_species_type)
     elif genus:
-        return repository.get_items(genus_id=genus, user_max_results = type_user_max_results, include_non_reference =is_include_non_reference_check, offset = offset, is_include_if_genus_is_type = is_include_if_genus_is_type)
+        return repository.get_items(
+            genus_id=genus,
+            max_results=max_results,
+            reference_only=reference_only,
+            offset=offset,
+            include_genus_type=include_genus_type)
     elif family:
-        return repository.get_items(family_id=family, user_max_results = type_user_max_results,  include_non_reference =is_include_non_reference_check, offset = offset)
+        return repository.get_items(
+            family_id=family,
+            max_results=max_results,
+            reference_only=reference_only,
+            offset=offset)
     else:
         # TODO: Search on database level.
         pass
 
-    return {}
+    return []
 
 
 @public.get("/catalogs/")

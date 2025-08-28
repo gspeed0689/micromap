@@ -262,12 +262,12 @@ class PostgresqlDataRepository:
     def get_items(self,
                   species_id = None,
                   genus_id: UUID = None,
-                  user_max_results = None,
-                  include_non_reference: bool = True,
+                  max_results = None,
+                  reference_only: bool = False,
                   family_id: UUID = None,
                   offset=0,
-                  is_include_if_genus_is_type = True,
-                  is_include_if_species_is_type = True) -> List[ORMItem]:
+                  include_genus_type = True,
+                  include_species_type = True) -> List[ORMItem]:
 
         # this function works by input. If family is selected, the family is retuned, so all genera and related species are returned
         # if genera is selected, genus and related species are returned
@@ -280,12 +280,13 @@ class PostgresqlDataRepository:
         # Sometimes users may want to filter out is_type #ToDO: highlight if Is_type on the website
         # is_type does not filter from family drop down. It only filters out if is_reference in the study field.
 
+        # TODO: there should be are more elegant way to build this query...
         items_ids = []
         #add a condition, if: include non-reference, then reference and non-reference returned. If exclude is_type. Then only on the non-reference filter out is_type true.
-        if include_non_reference == True: #this can be fitered by type
+        if not reference_only: #this can be fitered by type
             with Session(self.engine) as session:
                 if species_id:
-                    if is_include_if_species_is_type == True:
+                    if include_species_type == True:
                         items_ids = session.scalars(
                             select(ORMItem.id)
                             .where(ORMItem.species_id == species_id)
@@ -300,7 +301,7 @@ class PostgresqlDataRepository:
                             )
                         ).all()
                 elif genus_id: #genus first check to inlcude non-reference
-                    if is_include_if_genus_is_type == True: #condition if by default returning genus_is_type, include items that are under the  species
+                    if include_genus_type == True: #condition if by default returning genus_is_type, include items that are under the  species
                         subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
                         items_ids = session.scalars(
                             select(ORMItem.id)
@@ -363,14 +364,14 @@ class PostgresqlDataRepository:
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
-                        .where(ORMStudy.is_reference== True)
+                        .where(ORMStudy.is_reference == True)
                         .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
                     ).all()
 
 
         if items_ids:
             #Use a limit before the heavy query
-            paginated_ids = items_ids[offset: offset + user_max_results]# this ensure that the output is limited to a max number
+            paginated_ids = items_ids[offset: offset + max_results]# this ensure that the output is limited to a max number
 
         #return items not just ids (more efficent)
             with Session(self.engine) as session:
@@ -379,7 +380,7 @@ class PostgresqlDataRepository:
                  ).all()
 
             # Shuffle after query but with a seed so it is reproducible
-            random.seed(41)
+            random.seed(0)
             random.shuffle(items)  # This shuffles the actual ORMItem objects
 
             return items

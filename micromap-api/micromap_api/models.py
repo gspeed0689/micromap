@@ -1,7 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
 from uuid import UUID
-from pydantic_settings import BaseSettings
 
 
 class CatalogBase(BaseModel):
@@ -47,15 +46,6 @@ class Species(SpeciesBase):
 
     class Config:
         from_attributes = True
-
-
-# Default values. These values can also be set using environment variables.
-class Settings(BaseSettings):
-    max_results: int = 100
-    default_order: str = 'abundance'
-
-
-settings = Settings()
 
 class SubSpeciesBase(BaseModel):
     name: str
