@@ -159,12 +159,10 @@ def get_genera_for_alphabetica():
     data = repository.get_all_genera()  # No need for 'self'
     return data
 
-#not used
 @secure.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
     return { "id": repository.add_genus(genus) }
 
-#not used
 @secure.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
 async def put_genus(genus: Genus):
     try:
@@ -175,18 +173,17 @@ async def put_genus(genus: Genus):
 
 
 @public.get("/species/")
-
 async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> List[Species]:
     ''' returns species according to genus_id used in species drop down and alphabetical search'''
     if genera_id:
         return repository.get_species(genera_id)
     if catalog_id:
         return repository.get_species_for_catalog(catalog_id)
-#not used
+
 @secure.post("/species/", status_code=201)
 async def post_species(species: SpeciesBase):
     return { "id": repository.add_species(species) }
-#not used
+
 @secure.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
 async def put_species(species: Species):
     try:
@@ -197,9 +194,8 @@ async def put_species(species: Species):
 
 
 @secure.post("/items/")
-async def post_item(item: ItemCreateDTO) -> int:
-    repository.add_item(item)
-    return 200
+async def post_item(item: ItemCreateDTO):
+    return { "id": repository.add_item(item) }
 
 @public.get("/studies/")
 async def studies(catalog_id: str) -> List[Study]:

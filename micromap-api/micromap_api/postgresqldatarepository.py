@@ -1,20 +1,19 @@
 import os
-from typing import List, Dict
+from typing import List
 from uuid import UUID, uuid4
 
 import sqlalchemy
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import select, or_, and_
+from sqlalchemy.sql import or_, and_
 from sqlalchemy import create_engine, select, func
 
-
-from .models import settings #used to get max_results as defined in .env
+from .models import ItemCreateDTO
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
-from .models import ItemBase, CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
-import random # to randomise family and genus queries
+from .models import CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
+import random
 
 
 class PostgresqlDataRepository:
@@ -116,7 +115,10 @@ class PostgresqlDataRepository:
 
     def add_genus(self, new_genus: GenusBase)-> UUID:
         new_uuid = uuid4()
-        db_item = ORMGenus(id = new_uuid, name = new_genus.name, family_id = new_genus.family_id)
+        db_item = ORMGenus(id = new_uuid,
+                           name = new_genus.name,
+                           family_id = new_genus.family_id,
+                           is_type = new_genus.is_type)
 
         with Session(self.engine) as session:
             session.add(db_item)
@@ -130,6 +132,7 @@ class PostgresqlDataRepository:
                 genus = session.scalars(select(ORMGenus).where(ORMGenus.id == updated_genus.id)).one()
                 genus.name = updated_genus.name
                 genus.family_id = updated_genus.family_id
+                genus.is_type = updated_genus.is_type
                 session.commit()
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
@@ -142,7 +145,10 @@ class PostgresqlDataRepository:
 
     def add_species(self, new_species: SpeciesBase)-> UUID:
         new_uuid = uuid4()
-        db_item = ORMSpecies(id = new_uuid, name = new_species.name, genus_id = new_species.genus_id)
+        db_item = ORMSpecies(id = new_uuid,
+                             name = new_species.name,
+                             genus_id = new_species.genus_id,
+                             is_type=new_species.is_type)
 
         with Session(self.engine) as session:
             session.add(db_item)
@@ -156,6 +162,7 @@ class PostgresqlDataRepository:
                 species = session.scalars(select(ORMSpecies).where(ORMSpecies.id == updated_species.id)).one()
                 species.name = updated_species.name
                 species.genus_id = updated_species.genus_id
+                species.is_type = updated_species.is_type
                 session.commit()
             except sqlalchemy.exc.NoResultFound:
                 raise EntityDoesNotExistException()
@@ -179,6 +186,7 @@ class PostgresqlDataRepository:
                 description = new_study.description,
                 location = new_study.location,
                 remarks = new_study.remarks,
+                is_reference = new_study.is_reference,
                 catalog_id = new_study.catalog_id)
 
             with Session(self.engine) as session:
@@ -232,26 +240,18 @@ class PostgresqlDataRepository:
 
         return
 
-
-
-    def add_item(self, new_item: ItemBase)-> UUID:
+    def add_item(self, new_item: ItemCreateDTO)-> UUID:
         new_uuid = uuid4()
         db_item = ORMItem(
             id = new_uuid,
             key_image = new_item.key_image,
-            species_id = new_item.species_id,
-            genus_id = new_item.genus_id,
             family_id = new_item.family_id,
-            study_description = new_item.study_description,
-            study_remarks = new_item.study_remarks,
-            study_location = new_item.study_location,
-            sample_description = new_item.sample_description,
-            sample_remarks = new_item.sample_remarks,
-            sample_location = new_item.sample_location,
-            sample_age = new_item.sample_age,
-            slide_description = new_item.slide_description,
-            slide_remarks = new_item.slide_remarks,
-            )
+            genus_id = new_item.genus_id,
+            species_id = new_item.species_id,
+            subspecies_id = new_item.subspecies_id,
+            comment = new_item.comment,
+            slide_id = new_item.slide_id,
+            voxel_width = new_item.voxel_width)
 
         with Session(self.engine) as session:
             session.add(db_item)
@@ -259,7 +259,6 @@ class PostgresqlDataRepository:
 
         return new_uuid
 
-#subqueries are used to accomadate the database structure.
     def get_items(self,
                   species_id = None,
                   genus_id: UUID = None,
@@ -274,7 +273,7 @@ class PostgresqlDataRepository:
         # if genera is selected, genus and related species are returned
         # if species is selcted only species is returned.
 
-        # the item table only has either family_id, genus_id or species_id cannot be both. #ToDo: Issue 17, Implement this in SQL
+        # the item table only has either family_id, genus_id or species_id cannot be both.
 
         # is_type is a flag that pretains to if a there is a limit on the depth of precision on certain genera/species
         # is_type only concern non-reference material
@@ -301,7 +300,7 @@ class PostgresqlDataRepository:
                             )
                         ).all()
                 elif genus_id: #genus first check to inlcude non-reference
-                    if is_include_if_genus_is_type ==True: #condition if by default returning genus_is_type, include items that are under the  species
+                    if is_include_if_genus_is_type == True: #condition if by default returning genus_is_type, include items that are under the  species
                         subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
                         items_ids = session.scalars(
                             select(ORMItem.id)
@@ -488,6 +487,3 @@ class PostgresqlDataRepository:
                 })
 
         return family_data
-
-
-

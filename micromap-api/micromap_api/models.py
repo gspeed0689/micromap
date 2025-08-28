@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from uuid import UUID
 from pydantic_settings import BaseSettings
 
+
 class CatalogBase(BaseModel):
     name: str
 
@@ -23,9 +24,11 @@ class Family(FamilyBase):
     class Config:
         from_attributes = True
 
+
 class GenusBase(BaseModel):
     name: str
     family_id: UUID
+    is_type: bool = False
 
 class Genus(GenusBase):
     id: UUID
@@ -37,6 +40,7 @@ class Genus(GenusBase):
 class SpeciesBase(BaseModel):
     name: str
     genus_id: UUID
+    is_type: bool = False
 
 class Species(SpeciesBase):
     id: UUID
@@ -63,19 +67,20 @@ class SubSpecies(SpeciesBase):
     class Config:
         from_attributes = True
 
+
 class StudyBase(BaseModel):
     description: Optional[str]
     location: Optional[str]
     remarks: Optional[str]
     catalog_id: UUID
-    is_reference: bool
-
+    is_reference: bool = False
 
 class Study(StudyBase):
     id: UUID
 
     class Config:
         from_attributes = True
+
 
 class SampleBase(BaseModel):
     description: Optional[str]
@@ -98,7 +103,6 @@ class Sample(SampleBase):
     class Config:
         from_attributes = True
 
-# Slides
 
 class SlideBase(BaseModel):
     description: Optional[str]
@@ -117,7 +121,6 @@ class SlideCreateDTO(BaseModel):
     remarks: Optional[str]
     sample_id: UUID
 
-# -------------
 
 class ItemBase(BaseModel):
     key_image: str

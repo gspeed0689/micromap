@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Float, Boolean
+from sqlalchemy import String, ForeignKey, Float, Boolean, CheckConstraint
 from uuid import UUID
 from typing import List
 
@@ -74,8 +74,7 @@ class ORMStudy(Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
     location: Mapped[str] = mapped_column(String, nullable=True)
     remarks: Mapped[str] = mapped_column(String, nullable=True)
-    is_reference: Mapped[Boolean] = mapped_column(Boolean, nullable=False)
-
+    is_reference: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Reference to the Catalog that this Study belongs to
     catalog_id: Mapped[UUID] = mapped_column(ForeignKey("catalog.id"), nullable=False)
@@ -125,3 +124,13 @@ class ORMItem(Base):
 
     voxel_width: Mapped[float] = mapped_column(Float, nullable=False)
 
+    __table_args__ = (
+        # This constraint enforces one and only one of the taxonomic levels should be used.
+        CheckConstraint(
+            "(subspecies_id IS NOT NULL)::int + "
+            "(species_id IS NOT NULL)::int + "
+            "(genus_id IS NOT NULL)::int + "
+            "(family_id IS NOT NULL)::int = 1",
+            name="force_single_taxon",
+        ),
+    )
