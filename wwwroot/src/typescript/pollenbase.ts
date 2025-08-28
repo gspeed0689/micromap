@@ -263,8 +263,7 @@ async function showThumbnails(
   // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
   const maxResultsInput = document.getElementById('max-results-input') as HTMLInputElement | null;
   const maxResultsRaw = maxResultsInput?.value?.trim();
-  const maxResults = maxResultsRaw && !isNaN(parseInt(maxResultsRaw)) ? parseInt(maxResultsRaw) : 10; // default to 10
-  console.log(maxResults)
+  const maxResults = maxResultsRaw && !isNaN(parseInt(maxResultsRaw)) ? parseInt(maxResultsRaw) : 100; // default to 100
 
  // Get value for page
  // const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;

@@ -1,8 +1,8 @@
 import os
-from typing import List
+from typing import List, Optional, Sequence
 from uuid import UUID, uuid4
 
-import sqlalchemy
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import or_, and_
 from sqlalchemy import create_engine, select, func
@@ -12,7 +12,8 @@ from .models import ItemCreateDTO
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 
 from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
-from .models import CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
+from .models import (CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study,
+                     SampleCreateDTO, SlideCreateDTO)
 import random
 
 
@@ -30,7 +31,7 @@ class PostgresqlDataRepository:
 
     # Catalogs
 
-    def get_catalogs(self) -> List[ORMCatalog]:
+    def get_catalogs(self) -> Sequence[ORMCatalog]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMCatalog)).all()
 
@@ -47,17 +48,21 @@ class PostgresqlDataRepository:
     def update_catalog(self, updated_catalog: Catalog):
         with Session(self.engine) as session:
             try:
-                catalog = session.scalars(select(ORMCatalog).where(ORMCatalog.id == updated_catalog.id)).one()
+                catalog = session.scalars(
+                    select(ORMCatalog).where(ORMCatalog.id == updated_catalog.id)  # type: ignore
+                ).one()
                 catalog.name = updated_catalog.name
                 session.commit()
-            except sqlalchemy.exc.NoResultFound:
+            except NoResultFound:
                 raise EntityDoesNotExistException()
 
     # Families
 
-    def get_families(self, catalog_id: str) -> List[ORMFamily]:
+    def get_families(self, catalog_id: str) -> Sequence[ORMFamily]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMFamily).where(ORMFamily.catalog_id == catalog_id).order_by(ORMFamily.name)).all()
+            return session.scalars(
+                select(ORMFamily).where(ORMFamily.catalog_id == catalog_id).order_by(ORMFamily.name)  # type: ignore
+            ).all()
 
     def add_family(self, new_family: FamilyBase)-> UUID:
         new_uuid = uuid4()
@@ -72,45 +77,33 @@ class PostgresqlDataRepository:
     def update_family(self, updated_family: Family):
         with Session(self.engine) as session:
             try:
-                family = session.scalars(select(ORMFamily).where(ORMFamily.id == updated_family.id)).one()
+                family = session.scalars(
+                    select(ORMFamily).where(ORMFamily.id == updated_family.id)  # type: ignore
+                ).one()
                 family.name = updated_family.name
                 family.catalog_id = updated_family.catalog_id
                 session.commit()
-            except sqlalchemy.exc.NoResultFound:
+            except NoResultFound:
                 raise EntityDoesNotExistException()
 
-    def get_genera(self, family_id: str, is_include_if_genus_is_type = True) -> List[ORMGenus]:
-        '''This fucntion is used to fill in the genera drop down menu using the family_id
-        #Additionally if the is_include_if_genus_is_type is untick then it wont return is_type
-        Reference filtering handles by hiding the option is not clicked'''
-        if is_include_if_genus_is_type == True:
+    def get_genera(self, family_id: str, include_genus_type = True) -> Sequence[ORMGenus]:
+        """This function is used to fill in the genera drop down menu using the family_id
+        #Additionally if the is_include_if_genus_is_type is untick then it won't return is_type
+        Reference filtering handles by hiding the option is not clicked"""
+        if include_genus_type:
             with Session(self.engine) as session:
                 # Fetch all genera for the given family
-                genera = session.scalars(
-                    select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)
+                return session.scalars(
+                    select(ORMGenus).where(ORMGenus.family_id == family_id).order_by(ORMGenus.name)  # type: ignore
                 ).all()
-                return [
-                {
-                    "id": str(genus.id),  # Ensure ID is a string for JSON compatibility
-                    "name": genus.name
-                }
-                for genus in genera
-            ]
-        else: # if we dont want is_type genus
+        else: # if we don't want is_type genus
             with (Session(self.engine) as session):
                 # Fetch all genera for the given family
-                genera = session.scalars(
-                    select(ORMGenus).where(ORMGenus.family_id == family_id)
-                    .where(ORMGenus.is_type != True)  # Filter to exclude is_type = True
+                return session.scalars(
+                    select(ORMGenus).where(ORMGenus.family_id == family_id)  # type: ignore
+                    .where(~ORMGenus.is_type)  # Filter to exclude is_type = True
                     .order_by(ORMGenus.name)
                 ).all()
-                return [
-                    {
-                        "id": str(genus.id),  # Ensure ID is a string for JSON compatibility
-                        "name": genus.name
-                    }
-                    for genus in genera
-                ]
 
 
     def add_genus(self, new_genus: GenusBase)-> UUID:
@@ -129,19 +122,21 @@ class PostgresqlDataRepository:
     def update_genus(self, updated_genus: Genus):
         with Session(self.engine) as session:
             try:
-                genus = session.scalars(select(ORMGenus).where(ORMGenus.id == updated_genus.id)).one()
+                genus = session.scalars(select(ORMGenus).where(ORMGenus.id == updated_genus.id)).one()  # type: ignore
                 genus.name = updated_genus.name
                 genus.family_id = updated_genus.family_id
                 genus.is_type = updated_genus.is_type
                 session.commit()
-            except sqlalchemy.exc.NoResultFound:
+            except NoResultFound:
                 raise EntityDoesNotExistException()
 
     # Species
 
-    def get_species(self, genus_id: str) -> List[ORMSpecies]:
+    def get_species(self, genus_id: str) -> Sequence[ORMSpecies]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id == genus_id).order_by(ORMSpecies.name)).all()
+            return session.scalars(
+                select(ORMSpecies).where(ORMSpecies.genus_id == genus_id).order_by(ORMSpecies.name)  # type: ignore
+            ).all()
 
     def add_species(self, new_species: SpeciesBase)-> UUID:
         new_uuid = uuid4()
@@ -159,25 +154,29 @@ class PostgresqlDataRepository:
     def update_species(self, updated_species: Species):
         with Session(self.engine) as session:
             try:
-                species = session.scalars(select(ORMSpecies).where(ORMSpecies.id == updated_species.id)).one()
+                species = session.scalars(
+                    select(ORMSpecies).where(ORMSpecies.id == updated_species.id)  # type: ignore
+                ).one()
                 species.name = updated_species.name
                 species.genus_id = updated_species.genus_id
                 species.is_type = updated_species.is_type
                 session.commit()
-            except sqlalchemy.exc.NoResultFound:
+            except NoResultFound:
                 raise EntityDoesNotExistException()
 
-    def get_species_for_catalog(self, catalog_id: str) -> List[ORMSpecies]:
+    def get_species_for_catalog(self, catalog_id: str) -> Sequence[ORMSpecies]:
         with Session(self.engine) as session:
-            all_families = ( select(ORMFamily.id).where(ORMFamily.catalog_id == catalog_id).scalar_subquery() )
-            all_genera = ( select(ORMGenus.id).where(ORMGenus.family_id.in_(all_families)).scalar_subquery() )
-            return session.scalars(select(ORMSpecies).where(ORMSpecies.genus_id.in_(all_genera)).order_by(ORMSpecies.name)).all()
+            all_families = select(ORMFamily.id).where(ORMFamily.catalog_id == catalog_id).scalar_subquery()  # type: ignore
+            all_genera = select(ORMGenus.id).where(ORMGenus.family_id.in_(all_families)).scalar_subquery()
+            return session.scalars(
+                select(ORMSpecies).where(ORMSpecies.genus_id.in_(all_genera)).order_by(ORMSpecies.name)
+            ).all()
 
     # Studies
 
-    def get_studies(self, catalog_id: str) -> List[ORMStudy]:
+    def get_studies(self, catalog_id: str) -> Sequence[ORMStudy]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMStudy).where(ORMStudy.catalog_id == catalog_id)).all()
+            return session.scalars(select(ORMStudy).where(ORMStudy.catalog_id == catalog_id)).all()  # type: ignore
 
     def add_study(self, new_study: Study):
         try:
@@ -192,15 +191,15 @@ class PostgresqlDataRepository:
             with Session(self.engine) as session:
                 session.add(db_item)
                 session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
+        except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
         return
 
     # Samples
 
-    def get_samples(self, study_id: str) -> List[ORMSample]:
+    def get_samples(self, study_id: str) -> Sequence[ORMSample]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMSample).where(ORMSample.study_id == study_id)).all()
+            return session.scalars(select(ORMSample).where(ORMSample.study_id == study_id)).all()  # type: ignore
 
     def add_sample(self, new_sample: SampleCreateDTO):
         try:
@@ -215,14 +214,14 @@ class PostgresqlDataRepository:
             with Session(self.engine) as session:
                 session.add(db_item)
                 session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
+        except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
 
         return
 
-    def get_slides(self, sample_id: str) -> List[ORMSlide]:
+    def get_slides(self, sample_id: str) -> Sequence[ORMSlide]:
         with Session(self.engine) as session:
-            return session.scalars(select(ORMSlide).where(ORMSlide.sample_id == sample_id)).all()
+            return session.scalars(select(ORMSlide).where(ORMSlide.sample_id == sample_id)).all()  # type: ignore
 
     def add_slide(self, new_slide: SlideCreateDTO):
         try:
@@ -235,7 +234,7 @@ class PostgresqlDataRepository:
             with Session(self.engine) as session:
                 session.add(db_item)
                 session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
+        except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
 
         return
@@ -260,18 +259,18 @@ class PostgresqlDataRepository:
         return new_uuid
 
     def get_items(self,
-                  species_id = None,
-                  genus_id: UUID = None,
-                  max_results = None,
-                  reference_only: bool = False,
-                  family_id: UUID = None,
-                  offset=0,
+                  family_id: Optional[str] = None,
+                  genus_id: Optional[str] = None,
+                  species_id: Optional[str] = None,
                   include_genus_type = True,
-                  include_species_type = True) -> List[ORMItem]:
+                  include_species_type = True,
+                  reference_only: bool = False,
+                  max_results = None,
+                  offset=0) -> List[ORMItem]:
 
-        # this function works by input. If family is selected, the family is retuned, so all genera and related species are returned
+        # this function works by input. If family is selected, the family is returned, so all genera and related species are returned
         # if genera is selected, genus and related species are returned
-        # if species is selcted only species is returned.
+        # if species is selected only species is returned.
 
         # the item table only has either family_id, genus_id or species_id cannot be both.
 
@@ -283,33 +282,33 @@ class PostgresqlDataRepository:
         # TODO: there should be are more elegant way to build this query...
         items_ids = []
         #add a condition, if: include non-reference, then reference and non-reference returned. If exclude is_type. Then only on the non-reference filter out is_type true.
-        if not reference_only: #this can be fitered by type
+        if not reference_only: #this can be filtered by type
             with Session(self.engine) as session:
                 if species_id:
-                    if include_species_type == True:
+                    if include_species_type:
                         items_ids = session.scalars(
                             select(ORMItem.id)
-                            .where(ORMItem.species_id == species_id)
+                            .where(ORMItem.species_id == species_id)  # type: ignore
                         ).all()
                     else: #only select where not is is_type
                         items_ids = session.scalars(
                             select(ORMItem.id)
                             .join(ORMSpecies, ORMItem.species_id == ORMSpecies.id)
                             .where(
-                                ORMItem.species_id == species_id,
-                                ORMSpecies.is_type != True #not is_type
+                                ORMItem.species_id == species_id,  # type: ignore
+                                ~ORMSpecies.is_type
                             )
                         ).all()
-                elif genus_id: #genus first check to inlcude non-reference
-                    if include_genus_type == True: #condition if by default returning genus_is_type, include items that are under the  species
-                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                elif genus_id: #genus first check to include non-reference
+                    if include_genus_type: #condition if by default returning genus_is_type, include items that are under the  species
+                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()  # type: ignore
                         items_ids = session.scalars(
                             select(ORMItem.id)
                             .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
                         ).all()
                     else: #the same fetch request but exclude Is_type
-                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
-                        #dont select is_type false
+                        subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()  # type: ignore
+                        # don't select is_type false
                         items_ids = session.scalars(
                             select(ORMItem.id)
                             .join(ORMGenus,
@@ -319,7 +318,7 @@ class PostgresqlDataRepository:
                                     # Case 1: Item belongs to the genus, and genus is not a reference type (is_type != True)
                                     and_(
                                         ORMItem.genus_id == genus_id,  # Genus ID matches
-                                        ORMGenus.is_type != True  # Genus is not of type (non-reference)
+                                        ~ORMGenus.is_type  # Genus is not of type (non-reference)
                                     ),
                                     # Case 2: Item belongs to a species of the genus
                                     ORMItem.species_id.in_(subq_species)  # Item belongs to a species under the genus
@@ -328,8 +327,8 @@ class PostgresqlDataRepository:
                         ).all()
 
                 elif family_id:
-                    # 2 subqueries are required to capture alll those that are genera and species under this item
-                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    # 2 subqueries are required to capture all those that are genera and species under this item
+                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()  # type: ignore
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
                     items_ids = session.scalars(
                         select(ORMItem.id)
@@ -343,43 +342,43 @@ class PostgresqlDataRepository:
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
-                        .where(ORMStudy.is_reference == True)
-                        .where(ORMItem.species_id == species_id)
+                        .where(ORMStudy.is_reference)
+                        .where(ORMItem.species_id == species_id)  # type: ignore
                     ).all()
                 elif genus_id:
-                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()
+                    subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id == genus_id).scalar_subquery()  # type: ignore
                     items_ids = session.scalars(
                         select(ORMItem.id) #need to join slide to item to study
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
-                        .where(ORMStudy.is_reference == True)
+                        .where(ORMStudy.is_reference)
                         .where(or_(ORMItem.genus_id == genus_id, ORMItem.species_id.in_(subq_species)))
                     ).all()
                 elif family_id:
-                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()
+                    subq_genera = select(ORMGenus.id).where(ORMGenus.family_id == family_id).scalar_subquery()  # type: ignore
                     subq_species = select(ORMSpecies.id).where(ORMSpecies.genus_id.in_(subq_genera)).scalar_subquery()
                     items_ids = session.scalars(
                         select(ORMItem.id)
                         .join(ORMSlide, ORMItem.slide_id == ORMSlide.id)
                         .join(ORMSample, ORMSample.id == ORMSlide.sample_id)
                         .join(ORMStudy, ORMStudy.id == ORMSample.study_id)
-                        .where(ORMStudy.is_reference == True)
+                        .where(ORMStudy.is_reference)
                         .where(or_(ORMItem.family_id == family_id, ORMItem.genus_id.in_(subq_genera), ORMItem.species_id.in_(subq_species)))
                     ).all()
 
 
         if items_ids:
             #Use a limit before the heavy query
-            paginated_ids = items_ids[offset: offset + max_results]# this ensure that the output is limited to a max number
+            paginated_ids = items_ids[offset: offset + max_results]# this ensures that the output is limited to a max number
 
-        #return items not just ids (more efficent)
+        #return items not just ids (more efficient)
             with Session(self.engine) as session:
-                items = session.scalars(
+                items = list(session.scalars(
                 select(ORMItem).where(ORMItem.id.in_(paginated_ids))
-                 ).all()
+                 ).all())
 
-            # Shuffle after query but with a seed so it is reproducible
+            # Shuffle after query but with a seed, so it is reproducible
             random.seed(0)
             random.shuffle(items)  # This shuffles the actual ORMItem objects
 
@@ -387,7 +386,7 @@ class PostgresqlDataRepository:
         return [] # return an empty list if nothing else
 
 
-    def get_genera_by_letter(self, letter: str, is_include_if_genus_is_type: bool = True):
+    def get_genera_by_letter(self, letter: str, include_genus_type: bool = True):
         """
         Fetch all genera whose names start with the given letter, including family ID and name,
         ordered alphabetically.
@@ -406,25 +405,13 @@ class PostgresqlDataRepository:
                 .where(ORMGenus.name.ilike(f'{letter}%'))
             )
 
-            if not is_include_if_genus_is_type:
-                query = query.where(ORMGenus.is_type == False)
+            if not include_genus_type:
+                query.where(ORMGenus.is_type.is_(False))
 
-            query = query.order_by(ORMGenus.name)
+            query.order_by(ORMGenus.name)
 
             genera = session.execute(query).all()
 
-        genera_dicts = [{
-            'genus_id': genus_id,
-            'genus_name': genus_name,
-            'family_id': family_id,
-            'family_name': family_name
-        } for genus_id, genus_name, family_id, family_name in genera]
-
-        return genera_dicts
-
-        #if genera include genrea-TYPE not selected then dont include genera_type
-
-        # Convert list of tuples to list of dictionaries
         genera_dicts = [{
             'genus_id': genus_id,
             'genus_name': genus_name,
@@ -451,40 +438,40 @@ class PostgresqlDataRepository:
             return session.scalar(select(func.count()).select_from(ORMFamily))
 
 
-    #Return a list of family by letter. Used for alphabetical search
-    def get_family_by_letter(self, letter: str):
-        """Fetch families whose names start with the given letter, along with genus count."""
-        with Session(self.engine) as session:
-            families = session.scalars(
-                select(ORMFamily)
-                .where(func.lower(ORMFamily.name).startswith(letter.lower()))  # Case-insensitive filter
-                .order_by(ORMFamily.name)
-            ).all()
-
-            family_data = []
-            for family in families:
-                # Count genera linked to this family
-                genus_count = session.execute(
-                    select(func.count(ORMGenus.id))
-                    .where(ORMGenus.family_id == family.id)
-                ).scalar_one()  # Get integer result
-
-                # Count items linked either directly to family OR indirectly via genus
-                item_count = session.execute(
-                    select(func.count(ORMItem.id))
-                    .where(
-                        (ORMItem.family_id == family.id) |
-                        (ORMItem.genus_id.in_(
-                            select(ORMGenus.id).where(ORMGenus.family_id == family.id)
-                        ))
-                    )
-                ).scalar_one()
-
-                family_data.append({
-                    "id": str(family.id),
-                    "name": family.name,
-                    "genus_count": genus_count,  # Count of genera in this family
-                    "item_count": item_count  # Count of items linked to this family
-                })
-
-        return family_data
+    # #Return a list of family by letter. Used for alphabetical search
+    # def get_family_by_letter(self, letter: str):
+    #     """Fetch families whose names start with the given letter, along with genus count."""
+    #     with Session(self.engine) as session:
+    #         families = session.scalars(
+    #             select(ORMFamily)
+    #             .where(func.lower(ORMFamily.name).startswith(letter.lower()))  # Case-insensitive filter
+    #             .order_by(ORMFamily.name)
+    #         ).all()
+    #
+    #         family_data = []
+    #         for family in families:
+    #             # Count genera linked to this family
+    #             genus_count = session.execute(
+    #                 select(func.count(ORMGenus.id))
+    #                 .where(ORMGenus.family_id == family.id)
+    #             ).scalar_one()  # Get integer result
+    #
+    #             # Count items linked either directly to family OR indirectly via genus
+    #             item_count = session.execute(
+    #                 select(func.count(ORMItem.id))
+    #                 .where(
+    #                     (ORMItem.family_id == family.id) |
+    #                     (ORMItem.genus_id.in_(
+    #                         select(ORMGenus.id).where(ORMGenus.family_id == family.id)
+    #                     ))
+    #                 )
+    #             ).scalar_one()
+    #
+    #             family_data.append({
+    #                 "id": str(family.id),
+    #                 "name": family.name,
+    #                 "genus_count": genus_count,  # Count of genera in this family
+    #                 "item_count": item_count  # Count of items linked to this family
+    #             })
+    #
+    #     return family_data

@@ -1,6 +1,6 @@
 import os
 from hashlib import sha256
-from typing import Optional, List, Dict
+from typing import Optional, List, Sequence
 
 from fastapi import FastAPI, Query, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,10 +8,10 @@ from fastapi.routing import APIRoute, APIRouter
 from fastapi.security import APIKeyHeader
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
-
+from .ormmodels import ORMItem, ORMFamily, ORMGenus, ORMSpecies, ORMStudy, ORMSample, ORMSlide, ORMCatalog
 from .postgresqldatarepository import PostgresqlDataRepository
 from .models import (CatalogBase, Catalog, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO,
-                     Item, Study, Sample, Slide, SampleCreateDTO, SlideCreateDTO)
+                     Item, Study, SampleCreateDTO, Sample, SlideCreateDTO, Slide)
 
 
 def generate_unique_id(route: APIRoute):
@@ -50,10 +50,11 @@ repository.create_database()  # Create all tables. Will not attempt to recreate 
 async def root():
     return {"message": "MicroMap API"}
 
-@public.get("/items/")
-async def items(family: Optional[str] = Query(default=None),
-                genus: Optional[str] = Query(default=None),
-                species: Optional[str] = Query(default=None),
+
+@public.get("/items/", response_model=List[Item])
+async def items(family_id: Optional[str] = Query(default=None),
+                genus_id: Optional[str] = Query(default=None),
+                species_id: Optional[str] = Query(default=None),
                 include_genus_type: bool = Query(default=True),
                 include_species_type: bool = Query(default=True),
                 reference_only: bool = Query(default=False),
@@ -63,7 +64,7 @@ async def items(family: Optional[str] = Query(default=None),
                 order: str = os.environ.get('DEFAULT_ORDER', 'abundance'),
                 max_results: int = Query(default=100),
                 page: int = Query(default=1)
-                ) -> List[Item]:
+                ) -> List[ORMItem]:
     """
     Use:
     This function get the items we use to show the thumbnails
@@ -75,17 +76,21 @@ async def items(family: Optional[str] = Query(default=None),
 
     Offset and typesetting are performed here before the get_items function is called
 
-    Expaination of params:
+    Explanation of params:
     Handles a new query for pollen images.
 
-    :param family: A specific pollen family.
-    :param genus: A specific genus of a family.
-    :param species: A specific species of a genus.
-    :param study: A specific study.
-    :param sample: A specific sample in a study.
-    :param slide: A specific slide in a sample.
+    :param family_id: A specific pollen family.
+    :param genus_id: A specific genus of a family.
+    :param species_id: A specific species of a genus.
+    :param include_genus_type: Include genus types.
+    :param include_species_type: Include species types.
+    :param reference_only: Only include items from reference studies.
+    :param study: A specific study. - TODO: not used yet
+    :param sample: A specific sample in a study. - TODO: not used yet
+    :param slide: A specific slide in a sample. - TODO: not used yet
+    :param order: The order in which the results are returned. - TODO: not used yet
     :param max_results: Maximum number of results returned.
-    :param order: The order in which the results are returned.
+    :param page: The page number of the results.
     :return: A dictionary with matches.
     """
     # Build search query
@@ -95,25 +100,25 @@ async def items(family: Optional[str] = Query(default=None),
     offset = (page - 1) * max_results
 
     # Fetch results based on available filters
-    if species:
+    if species_id:
         return repository.get_items(
-            species_id=species,
-            max_results=max_results,
+            species_id=species_id,
+            include_species_type=include_species_type,
             reference_only=reference_only,
-            offset=offset,
-            include_species_type=include_species_type)
-    elif genus:
+            max_results=max_results,
+            offset=offset)
+    elif genus_id:
         return repository.get_items(
-            genus_id=genus,
-            max_results=max_results,
+            genus_id=genus_id,
+            include_genus_type=include_genus_type,
             reference_only=reference_only,
-            offset=offset,
-            include_genus_type=include_genus_type)
-    elif family:
+            max_results=max_results,
+            offset=offset)
+    elif family_id:
         return repository.get_items(
-            family_id=family,
-            max_results=max_results,
+            family_id=family_id,
             reference_only=reference_only,
+            max_results=max_results,
             offset=offset)
     else:
         # TODO: Search on database level.
@@ -121,9 +126,13 @@ async def items(family: Optional[str] = Query(default=None),
 
     return []
 
+@secure.post("/items/")
+async def post_item(item: ItemCreateDTO):
+    return { "id": repository.add_item(item) }
 
-@public.get("/catalogs/")
-async def catalog() -> List[Catalog]:
+
+@public.get("/catalogs/", response_model=Sequence[Catalog])
+async def catalog() -> Sequence[ORMCatalog]:
     return repository.get_catalogs()
 
 @secure.post("/catalogs/", status_code=201)
@@ -139,8 +148,8 @@ async def put_catalog(catalog: Catalog):
     return
 
 
-@public.get("/families/")
-async def families(catalog_id: str) -> List[Family]:
+@public.get("/families/", response_model=Sequence[Family])
+async def families(catalog_id: str) -> Sequence[ORMFamily]:
     return repository.get_families(catalog_id)
 
 @secure.post("/families/", status_code=201)
@@ -155,19 +164,30 @@ async def put_family(family: Family):
         return 404
     return
 
+@public.get("/families/count/")
+async def get_family_count():
+    num =  repository.get_family_count()
+    return {"count": num}
 
-@public.get("/genera/")
-async def genera(family_id: str, is_include_if_genus_is_type: bool = True) -> List[Dict]:
-    '''
-    Used for alphabetsearch and genera drop down additional argument to not include genera_is_type
-    '''
-    return repository.get_genera(family_id, is_include_if_genus_is_type)
+# #not used
+# @public.get("/family/letter/{letter}")
+# async def family_by_letter(letter: str):
+#     family_list = repository.get_family_by_letter(letter)
+#
+#     return family_list
 
-#not use
-@public.get("/genera_for_alphabetical/")
-def get_genera_for_alphabetica():
-    data = repository.get_all_genera()  # No need for 'self'
-    return data
+
+@public.get("/genera/", response_model=Sequence[Genus])
+async def genera(family_id: str, include_genus_type: bool = True) -> Sequence[ORMGenus]:
+    """
+    Used for alphabetical search and genera drop down additional argument to not include genera_is_type
+    """
+    return repository.get_genera(family_id, include_genus_type)
+
+# @public.get("/genera_for_alphabetical/")
+# def get_genera_for_alphabetical():
+#     data = repository.get_all_genera()
+#     return data
 
 @secure.post("/genera/", status_code=201)
 async def post_genus(genus: GenusBase):
@@ -181,10 +201,21 @@ async def put_genus(genus: Genus):
         return 404
     return
 
+@public.get("/genera/letter/{letter}")
+async def genera_by_letter(letter: str, include_genus_type: bool = True):
+    """Return GENERA by capital first letter, for alphabetical search, removes if_genus_is_type"""
+    genera_list = repository.get_genera_by_letter(letter, include_genus_type)
+    return genera_list
 
-@public.get("/species/")
-async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> List[Species]:
-    ''' returns species according to genus_id used in species drop down and alphabetical search'''
+@public.get("/genera/count/")
+async def get_genera_count():
+    num =  repository.get_genera_count()
+    return {"count": num}
+
+
+@public.get("/species/", response_model=Sequence[Species])
+async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> Sequence[ORMSpecies]:
+    """ returns species according to genus_id used in species drop down and alphabetical search"""
     if genera_id:
         return repository.get_species(genera_id)
     if catalog_id:
@@ -202,13 +233,14 @@ async def put_species(species: Species):
         return 404
     return
 
+@public.get("/species/count/")
+async def get_species_count():
+    num =  repository.get_species_count()
+    return {"count": num}
 
-@secure.post("/items/")
-async def post_item(item: ItemCreateDTO):
-    return { "id": repository.add_item(item) }
 
-@public.get("/studies/")
-async def studies(catalog_id: str) -> List[Study]:
+@public.get("/studies/", response_model=Sequence[Study])
+async def studies(catalog_id: str) -> Sequence[ORMStudy]:
     return repository.get_studies(catalog_id)
 
 @secure.post("/studies/", status_code=201)
@@ -219,8 +251,9 @@ async def post_study(study: Study):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-@public.get("/samples/")
-async def samples(study_id: str) -> List[Sample]:
+
+@public.get("/samples/", response_model=Sequence[Sample])
+async def samples(study_id: str) -> Sequence[ORMSample]:
     return repository.get_samples(study_id)
 
 @secure.post("/samples/", status_code=201)
@@ -231,8 +264,9 @@ async def post_sample(sample: SampleCreateDTO):
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
 
-@public.get("/slides/")
-async def slides(sample_id: str) -> List[Slide]:
+
+@public.get("/slides/", response_model=Sequence[Slide])
+async def slides(sample_id: str) -> Sequence[ORMSlide]:
     return repository.get_slides(sample_id)
 
 @secure.post("/slides/", status_code=201)
@@ -242,41 +276,6 @@ async def post_slide(slide: SlideCreateDTO):
     except KeyViolationException as e:
         raise HTTPException(status_code=409, detail=e.detailed_message)
     return
-
-@public.get("/genera/letter/{letter}")
-async def genera_by_letter(letter: str, is_include_if_genus_is_type: bool = True):
-    '''Return GENERA by capital first letter, for alphabetical search, removes if_genyus_is_type'''
-    genera_list = repository.get_genera_by_letter(letter, is_include_if_genus_is_type)
-    return genera_list
-
-#not used
-@public.get("/family/letter/{letter}")
-async def family_by_letter(letter: str):
-    family_list = repository.get_family_by_letter(letter)
-
-    return family_list
-
-#Dashbaord test - functions written for the future.
-#Family
-@public.get("/get_family_count/")
-async def get_family_count_endpoint():
-    num =  repository.get_family_count()
-    return {"family_count": num}
-#Genera
-@public.get("/get_genera_count/")
-async def get_genera_count_endpoint():
-    num =  repository.get_genera_count()
-    return {"Genera": num}
-
-#Species
-@public.get("/get_species_count/")
-async def get_species_count_endpoint():
-    num =  repository.get_species_count()
-    return {"species_count": num}
-# #subspecies
-#study post
-#sample get/post
-#slide get/post
 
 
 app.include_router(public)
