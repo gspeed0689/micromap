@@ -1,19 +1,24 @@
-# MicroMap Server
+# MicroMap
 MicroMap is designed to access image (stacks) at different taxonomic levels.
 The project was initially envisioned for microscopic pollen data, but the long-term goal is to expand its use to other
 domains, such as medical imagery.
 
-## Setting up a Development Environment
 This README is specific to the pollen use case and is intended for users setting up MicroMap for development. 
 
-### MicroMap Overview
+## Overview
 MicroMap consists of three main components:
 1. Database: A PostgreSQL database stores pollen information in a hierarchical format.  
    **ToDo:** Add a description of the database structure/schema.  
 2. REST API: The [REST API](https://en.wikipedia.org/wiki/REST) translates user queries made on the MicroMap website
    into SQL queries that interact with the database. The REST API is implemented using FastAPI.
 3. MicroMap Website: The website serves as the Graphical User Interface (GUI) and it built with TypeScript.
-   It allows users to query and view pollen images at various taxonomic levels and scroll through 3D image stacks. 
+   It allows users to query and view pollen images at various taxonomic levels and scroll through 3D image stacks.
+
+## REST API
+The API allows using custom [UUID's](https://www.postgresql.org/docs/current/datatype-uuid.html) when posting new
+database items. If no UUID is given, then a new random UUID will be created and returned.
+
+## Setting up the backend for development
 
 ### Prerequisites
 Before setting up the development environment, ensure the following software is installed:  
@@ -58,8 +63,7 @@ uvicorn --env-file .env micromap_api.main:app
 If successful, the terminal should output a link that can be used in the web browser to access the REST API, for example `http://localhost:8000/`.
 The endpoint /docs, e.g. `http://localhost:8000/docs` should show the OpenAPI documentation.
 
-
-## Website
+## Setting up the frontend (website) for development
 
 ### Install npm
 Compiling the source code for the website requires the node package manager (npm) and build tools.
@@ -104,7 +108,7 @@ npx webpack
 ### Configure and run the website
 The API address and catalog id are configured in the file `config.js` in `wwwroot`.
 
-Use a lightweight static server to serve the website:
+Use a lightweight static server to serve the website. 
 ```shell
 npm install -g serve
 serve .

@@ -47,24 +47,25 @@ repository.create_database()  # Create all tables. Will not attempt to recreate 
 
 
 @public.get("/")
-async def root():
+async def get_root():
     return {"message": "MicroMap API"}
 
 
 @public.get("/items/", response_model=List[Item])
-async def items(family_id: Optional[str] = Query(default=None),
-                genus_id: Optional[str] = Query(default=None),
-                species_id: Optional[str] = Query(default=None),
-                include_genus_type: bool = Query(default=True),
-                include_species_type: bool = Query(default=True),
-                reference_only: bool = Query(default=False),
-                study: Optional[str] = Query(default=None),
-                sample: Optional[str] = Query(default=None),
-                slide: Optional[str] = Query(default=None),
-                order: str = os.environ.get('DEFAULT_ORDER', 'abundance'),
-                max_results: int = Query(default=100),
-                page: int = Query(default=1)
-                ) -> List[ORMItem]:
+async def get_items(
+        family_id: Optional[str] = Query(default=None),
+        genus_id: Optional[str] = Query(default=None),
+        species_id: Optional[str] = Query(default=None),
+        include_genus_type: bool = Query(default=True),
+        include_species_type: bool = Query(default=True),
+        reference_only: bool = Query(default=False),
+        study: Optional[str] = Query(default=None),
+        sample: Optional[str] = Query(default=None),
+        slide: Optional[str] = Query(default=None),
+        order: str = os.environ.get('DEFAULT_ORDER', 'abundance'),
+        max_results: int = Query(default=100),
+        page: int = Query(default=1)
+) -> List[ORMItem]:
     """
     Use:
     This function get the items we use to show the thumbnails
@@ -132,7 +133,7 @@ async def post_item(item: ItemCreateDTO):
 
 
 @public.get("/catalogs/", response_model=Sequence[Catalog])
-async def catalog() -> Sequence[ORMCatalog]:
+async def get_catalogs() -> Sequence[ORMCatalog]:
     return repository.get_catalogs()
 
 @secure.post("/catalogs/", status_code=201)
@@ -149,7 +150,7 @@ async def put_catalog(catalog: Catalog):
 
 
 @public.get("/families/", response_model=Sequence[Family])
-async def families(catalog_id: str) -> Sequence[ORMFamily]:
+async def get_families(catalog_id: str) -> Sequence[ORMFamily]:
     return repository.get_families(catalog_id)
 
 @secure.post("/families/", status_code=201)
@@ -178,7 +179,7 @@ async def get_family_count():
 
 
 @public.get("/genera/", response_model=Sequence[Genus])
-async def genera(family_id: str, include_genus_type: bool = True) -> Sequence[ORMGenus]:
+async def get_genera(family_id: str, include_genus_type: bool = True) -> Sequence[ORMGenus]:
     """
     Used for alphabetical search and genera drop down additional argument to not include genera_is_type
     """
@@ -202,7 +203,7 @@ async def put_genus(genus: Genus):
     return
 
 @public.get("/genera/letter/{letter}")
-async def genera_by_letter(letter: str, include_genus_type: bool = True):
+async def get_genera_by_letter(letter: str, include_genus_type: bool = True):
     """Return GENERA by capital first letter, for alphabetical search, removes if_genus_is_type"""
     genera_list = repository.get_genera_by_letter(letter, include_genus_type)
     return genera_list
@@ -214,7 +215,7 @@ async def get_genera_count():
 
 
 @public.get("/species/", response_model=Sequence[Species])
-async def species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> Sequence[ORMSpecies]:
+async def get_species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> Sequence[ORMSpecies]:
     """ returns species according to genus_id used in species drop down and alphabetical search"""
     if genera_id:
         return repository.get_species(genera_id)
@@ -240,7 +241,7 @@ async def get_species_count():
 
 
 @public.get("/studies/", response_model=Sequence[Study])
-async def studies(catalog_id: str) -> Sequence[ORMStudy]:
+async def get_studies(catalog_id: str) -> Sequence[ORMStudy]:
     return repository.get_studies(catalog_id)
 
 @secure.post("/studies/", status_code=201)
@@ -253,7 +254,7 @@ async def post_study(study: Study):
 
 
 @public.get("/samples/", response_model=Sequence[Sample])
-async def samples(study_id: str) -> Sequence[ORMSample]:
+async def get_samples(study_id: str) -> Sequence[ORMSample]:
     return repository.get_samples(study_id)
 
 @secure.post("/samples/", status_code=201)
@@ -266,7 +267,7 @@ async def post_sample(sample: SampleCreateDTO):
 
 
 @public.get("/slides/", response_model=Sequence[Slide])
-async def slides(sample_id: str) -> Sequence[ORMSlide]:
+async def get_slides(sample_id: str) -> Sequence[ORMSlide]:
     return repository.get_slides(sample_id)
 
 @secure.post("/slides/", status_code=201)
