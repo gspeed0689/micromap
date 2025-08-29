@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional, Sequence
 from uuid import UUID, uuid4
+import random
 
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Session
@@ -8,13 +9,10 @@ from sqlalchemy.sql import or_, and_
 from sqlalchemy import create_engine, select, func
 
 from .models import ItemCreateDTO
-
 from .exceptions import KeyViolationException, EntityDoesNotExistException
-
-from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, Base
+from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, ORMBase
 from .models import (CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study,
                      SampleCreateDTO, SlideCreateDTO)
-import random
 
 
 class PostgresqlDataRepository:
@@ -27,7 +25,7 @@ class PostgresqlDataRepository:
         self.engine = create_engine(f"postgresql://{user}:{password}@{server}:{port}/{database}", echo=True)
 
     def create_database(self):
-        Base.metadata.create_all(self.engine)
+        ORMBase.metadata.create_all(self.engine)  # ORMBase.metadata is the collection of all ORM tables.
 
     # Catalogs
 
