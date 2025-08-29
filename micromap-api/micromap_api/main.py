@@ -10,7 +10,7 @@ from fastapi.security import APIKeyHeader
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMItem, ORMFamily, ORMGenus, ORMSpecies, ORMStudy, ORMSample, ORMSlide, ORMCatalog
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import (CatalogBase, Catalog, FamilyBase, Family, Genus, GenusBase, Species, SpeciesBase, ItemCreateDTO,
+from .models import (Catalog, Family, Genus, Species, SpeciesBase, ItemCreateDTO,
                      Item, Study, SampleCreateDTO, Sample, SlideCreateDTO, Slide)
 
 
@@ -132,37 +132,47 @@ async def post_item(item: ItemCreateDTO):
     return { "id": repository.add_item(item) }
 
 
-@public.get("/catalogs/", response_model=Sequence[Catalog])
+@public.get("/catalogs/", response_model=Sequence[Catalog], description="Gets all catalogs.")
 async def get_catalogs() -> Sequence[ORMCatalog]:
     return repository.get_catalogs()
 
-@secure.post("/catalogs/", status_code=201)
-async def post_catalog(catalog: CatalogBase):
-    return { "id": repository.add_catalog(catalog) }
+@secure.post("/catalogs/",
+             status_code=201,
+             description="Adds a new catalog. The id can either be set or generated if null.")
+async def post_catalog(catalog: Catalog):
+    try:
+        return {"id": repository.add_catalog(catalog)}
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
 
-@secure.put("/catalogs/", status_code=200, responses = {404: {"description": "Catalog does not exist"}})
+@secure.put("/catalogs/", status_code=200)
 async def put_catalog(catalog: Catalog):
     try:
         repository.update_catalog(catalog)
-    except EntityDoesNotExistException:
-        return 404
+    except EntityDoesNotExistException as e:
+        return HTTPException(status_code=404, detail="Catalog does not exist.")
     return
 
 
-@public.get("/families/", response_model=Sequence[Family])
+@public.get("/families/", response_model=Sequence[Family], description="Gets all families in a catalog.")
 async def get_families(catalog_id: str) -> Sequence[ORMFamily]:
     return repository.get_families(catalog_id)
 
-@secure.post("/families/", status_code=201)
-async def post_family(family: FamilyBase):
-    return { "id": repository.add_family(family) }
+@secure.post("/families/",
+             status_code=201,
+             description="Adds a new family to a catalog. The id can either be set or generated if null.")
+async def post_family(family: Family):
+    try:
+        return {"id": repository.add_family(family)}
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
 
-@secure.put("/families/", status_code=200, responses = {404: {"description": "Family does not exist"}})
+@secure.put("/families/", status_code=200)
 async def put_family(family: Family):
     try:
         repository.update_family(family)
     except EntityDoesNotExistException:
-        return 404
+        return HTTPException(status_code=404, detail="Family does not exist.")
     return
 
 @public.get("/families/count/")
@@ -178,28 +188,32 @@ async def get_family_count():
 #     return family_list
 
 
-@public.get("/genera/", response_model=Sequence[Genus])
-async def get_genera(family_id: str, include_genus_type: bool = True) -> Sequence[ORMGenus]:
-    """
-    Used for alphabetical search and genera drop down additional argument to not include genera_is_type
-    """
-    return repository.get_genera(family_id, include_genus_type)
+@public.get("/genera/", response_model=Sequence[Genus], description="Gets all genera in a family.")
+async def get_genera(
+        family_id: str,
+        include_type: bool = Query(True, description="Include -type genera.")) -> Sequence[ORMGenus]:
+    return repository.get_genera(family_id, include_type)
 
 # @public.get("/genera_for_alphabetical/")
 # def get_genera_for_alphabetical():
 #     data = repository.get_all_genera()
 #     return data
 
-@secure.post("/genera/", status_code=201)
-async def post_genus(genus: GenusBase):
-    return { "id": repository.add_genus(genus) }
+@secure.post("/genera/",
+             status_code=201,
+             description="Adds a new genus to a family. The id can either be set or generated if null.")
+async def post_genus(genus: Genus):
+    try:
+        return {"id": repository.add_genus(genus)}
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
 
-@secure.put("/genera/", status_code=200, responses = {404: {"description": "Genus does not exist"}})
+@secure.put("/genera/", status_code=200)
 async def put_genus(genus: Genus):
     try:
         repository.update_genus(genus)
     except EntityDoesNotExistException:
-        return 404
+        return HTTPException(status_code=404, detail="Genus does not exist.")
     return
 
 @public.get("/genera/letter/{letter}")

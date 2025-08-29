@@ -1,39 +1,28 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 
-class CatalogBase(BaseModel):
-    name: str
-
-class Catalog(CatalogBase):
-    id: UUID
+class MicromapBaseModel(BaseModel):
+    id: Optional[UUID]  # IDs are not nullable in the ORM model, but can either be set or generated in this API.
 
     class Config:
         from_attributes = True
 
 
-class FamilyBase(BaseModel):
+class Catalog(MicromapBaseModel):
+    name: str
+
+
+class Family(MicromapBaseModel):
     name: str
     catalog_id: UUID
 
-class Family(FamilyBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True
-
-
-class GenusBase(BaseModel):
+class Genus(MicromapBaseModel):
     name: str
     family_id: UUID
     is_type: bool = False
-
-class Genus(GenusBase):
-    id: UUID
-
-    class Config:
-        from_attributes = True
 
 
 class SpeciesBase(BaseModel):

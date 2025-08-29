@@ -11,8 +11,7 @@ from sqlalchemy import create_engine, select, func
 from .models import ItemCreateDTO
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, ORMBase
-from .models import (CatalogBase, Catalog, FamilyBase, Family, GenusBase, Genus, SpeciesBase, Species, Study,
-                     SampleCreateDTO, SlideCreateDTO)
+from .models import Catalog, Family, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
 
 
 class PostgresqlDataRepository:
@@ -27,19 +26,22 @@ class PostgresqlDataRepository:
     def create_database(self):
         ORMBase.metadata.create_all(self.engine)  # ORMBase.metadata is the collection of all ORM tables.
 
+
     # Catalogs
 
     def get_catalogs(self) -> Sequence[ORMCatalog]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMCatalog)).all()
 
-    def add_catalog(self, new_catalog: CatalogBase)-> UUID:
-        new_uuid = uuid4()
+    def add_catalog(self, new_catalog: Catalog)-> UUID:
+        new_uuid = new_catalog.id or uuid4()
         db_item = ORMCatalog(id = new_uuid, name = new_catalog.name)
-
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
+        try:
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
 
         return new_uuid
 
@@ -54,6 +56,7 @@ class PostgresqlDataRepository:
             except NoResultFound:
                 raise EntityDoesNotExistException()
 
+
     # Families
 
     def get_families(self, catalog_id: str) -> Sequence[ORMFamily]:
@@ -62,13 +65,16 @@ class PostgresqlDataRepository:
                 select(ORMFamily).where(ORMFamily.catalog_id == catalog_id).order_by(ORMFamily.name)  # type: ignore
             ).all()
 
-    def add_family(self, new_family: FamilyBase)-> UUID:
-        new_uuid = uuid4()
+    def add_family(self, new_family: Family)-> UUID:
+        new_uuid = new_family.id or uuid4()
         db_item = ORMFamily(id = new_uuid, name = new_family.name, catalog_id = new_family.catalog_id)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
+        try:
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
 
         return new_uuid
 
@@ -84,11 +90,14 @@ class PostgresqlDataRepository:
             except NoResultFound:
                 raise EntityDoesNotExistException()
 
-    def get_genera(self, family_id: str, include_genus_type = True) -> Sequence[ORMGenus]:
+
+    # Genera
+
+    def get_genera(self, family_id: str, include_type = True) -> Sequence[ORMGenus]:
         """This function is used to fill in the genera drop down menu using the family_id
         #Additionally if the is_include_if_genus_is_type is untick then it won't return is_type
         Reference filtering handles by hiding the option is not clicked"""
-        if include_genus_type:
+        if include_type:
             with Session(self.engine) as session:
                 # Fetch all genera for the given family
                 return session.scalars(
@@ -104,16 +113,19 @@ class PostgresqlDataRepository:
                 ).all()
 
 
-    def add_genus(self, new_genus: GenusBase)-> UUID:
-        new_uuid = uuid4()
+    def add_genus(self, new_genus: Genus)-> UUID:
+        new_uuid = new_genus.id or uuid4()
         db_item = ORMGenus(id = new_uuid,
                            name = new_genus.name,
                            family_id = new_genus.family_id,
                            is_type = new_genus.is_type)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
+        try:
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
 
         return new_uuid
 
