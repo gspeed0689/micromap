@@ -4,13 +4,11 @@ import { FocusSlider } from './focusslider';
 import { ScaleBar } from "./scalebar";
 
 
-OpenAPI.BASE = API_BASE_URL;
+OpenAPI.BASE = API_BASE_URL;  // Set the configured API URL (from config.js).
 
-let viewer = null;
-let currentItems: Array<Item> = null;
-let families: Array<Family> = null;
+let currentItems: Array<Item> = [];  // List of current displayed items. Used in thumbnailSelect.
+let families: Array<Family> = [];  // Cached list of families in the catalog.
 //let genera: Array<Genus> = null;
-
 
 
 /**
@@ -31,14 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
 /**
  * Populates the family select box in the dropdown menu bar.
  Defaults to 'Please select a family' so the page doesn't load with preloaded thumbnails
 
  ToDo: Somewhere the get_familes function is failing #Issue: 14*
  */
-  export async function populateFamilySelect(): Promise<void> {
+export async function populateFamilySelect(): Promise<void> {
   const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
   familySelectBox.innerHTML = ''; // Clear any existing options
 
@@ -54,113 +51,118 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 }
+
+
 /**
 When family is changed the family_id is returned and used to populate genera
  */
-    export function onFamilyChange() {
-      const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-      if (familySelectBox.value == "")
-        return;
-      console.log('familychange ', JSON.stringify(familySelectBox.value));
-      populateGeneraSelect(familySelectBox.value);
-      showThumbnails(null, null, familySelectBox.value)
-    }
+export function onFamilyChange() {
+  const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
+  if (familySelectBox.value == "")
+    return;
+  console.log('familychange ', JSON.stringify(familySelectBox.value));
+  populateGeneraSelect(familySelectBox.value);
+  showThumbnails(null, null, familySelectBox.value)
+}
+
+
  /**
 Genera change works, defaults to select an option, or ALL or genera, then populates thumbnails
  */
-    export function onGeneraChange() {
-      const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
-      const selectedGenus = generaSelectBox.value;
+export function onGeneraChange() {
+  const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
+  const selectedGenus = generaSelectBox.value;
 
-      console.log('genera change ', JSON.stringify(generaSelectBox.value));
+  console.log('genera change ', JSON.stringify(generaSelectBox.value));
 
+  if (selectedGenus === '') {
+    // Do nothing — waiting for a valid selection
+    console.log('No genus selected yet.');
+    return;
+  }
 
-      if (selectedGenus === '') {
-        // Do nothing — waiting for a valid selection
-        console.log('No genus selected yet.');
-        return;
-      }
+  if (selectedGenus != '__ALL__') {
+    populateSpeciesSelect(selectedGenus)
+    showThumbnails(null, selectedGenus, null);
+  }
+  else {
+    console.log('all genera')
+    const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
+    populateSpeciesSelect(null)
+    showThumbnails(null, null, familySelectBox.value);
+  }
+}
 
-      if (selectedGenus != '__ALL__') {
-        populateSpeciesSelect(selectedGenus)
-        showThumbnails(null, selectedGenus, null);
-      }
-      else {
-        console.log('all genera')
-        const familySelectBox = document.getElementById('family-select') as HTMLSelectElement;
-        showThumbnails(null, null, familySelectBox.value);
-      }
-    }
 
 //The purpose of this is to fill in the genera drop down but also if the is_genera type box not clciked we want to exclude them
-    async function populateGeneraSelect(familyid: string) {
-      //clear exisiting
-      const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
-      while (generaSelectBox.firstChild) {
-        generaSelectBox.firstChild.remove()
-      }
+async function populateGeneraSelect(familyId: string | null = null) {
+  //clear exisiting
+  const generaSelectBox = document.getElementById('genera-select') as HTMLSelectElement;
+  while (generaSelectBox.firstChild) {
+    generaSelectBox.firstChild.remove()
+  }
 
-        // Add default "Please select a genus" option
-      const defaultOption = new Option('Please select a genus', '', true, true);
-      defaultOption.disabled = true;
-      generaSelectBox.add(defaultOption);
+  // Populate genera with API call
+  if (familyId != null) {
+    // Add default "Please select a genus" option
+    const defaultOption = new Option('Please select a genus', '', true, true);
+    defaultOption.disabled = true;
+    generaSelectBox.add(defaultOption);
 
-      //add 'ALL' Option
-      generaSelectBox.add(new Option('All', '__ALL__'));
+    // Get the checkbox state for whether to include genera with is_type = True
+    const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
+    const includeGenusType = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
-        // Get the checkbox state for whether to include genera with is_type = True
-      const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
-      const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+    generaSelectBox.add(new Option('All', '__ALL__'));  //add 'ALL' Option
 
-
-    // Populate genera with API call
-      const genera = await DefaultService.getGenera(familyid, is_include_if_genus_is_type);
-      for (const genus of genera) {
-        generaSelectBox.add(new Option(genus.name, genus.id));
-      }
-      onGeneraChange();
+    const genera = await DefaultService.getGenera(familyId, includeGenusType);
+    for (const genus of genera) {
+      generaSelectBox.add(new Option(genus.name, genus.id));
     }
+  }
+  onGeneraChange();
+}
+
 
 // species drop down now defaults to please select a species
 // ToDo: Implement the is_type filter by species
-    async function populateSpeciesSelect(generaid: string) {
-        const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+async function populateSpeciesSelect(generaId: string | null = null) {
+    const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
 
-      // Clear existing options
-      while (speciesSelectBox.firstChild) {
-        speciesSelectBox.firstChild.remove();
-      }
+  // Clear existing options
+  while (speciesSelectBox.firstChild) {
+    speciesSelectBox.firstChild.remove();
+  }
 
-      // Add default "Please select a species" option
-      const defaultOption = new Option('Please select a species', '', true, true);
-      defaultOption.disabled = true;
-      speciesSelectBox.add(defaultOption);
+  // Populate with species from the API
+  if (generaId != null) {
+    // Add default "Please select a species" option
+    const defaultOption = new Option('Please select a species', '', true, true);
+    defaultOption.disabled = true;
+    speciesSelectBox.add(defaultOption);
 
-      // Populate with species from the API
-      if (generaid != null) {
-        const speciesList = await DefaultService.getSpecies(generaid);
-        for (const species of speciesList) {
-          speciesSelectBox.add(new Option(species.name, species.id));
-        }
-      }
+    const speciesList = await DefaultService.getSpecies(generaId, null);
+    for (const species of speciesList) {
+      speciesSelectBox.add(new Option(species.name, species.id));
     }
+  }
+}
 
 
-    export function onSpeciesChange() {
-      const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
-      const selectedSpecies = speciesSelectBox.value;
+export function onSpeciesChange() {
+  const speciesSelectBox = document.getElementById('species-select') as HTMLSelectElement;
+  const selectedSpecies = speciesSelectBox.value;
 
-      if (selectedSpecies === '') {
-        console.log('No species selected yet.');
-        return; // Skip if default option is still selected
-      }
+  if (selectedSpecies === '') {
+    console.log('No species selected yet.');
+    return; // Skip if default option is still selected
+  }
 
-      showThumbnails(selectedSpecies, null, null);
-    }
+  showThumbnails(selectedSpecies, null, null);
+}
 
 
-
-// Logic to  get page number display working, cant go below 0 used in get_items for pagation control
+// Logic to  get page number display working, cant go below 0 used in get_items for pagination control
 let currentPage: number = 1; // Start on page 1
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -189,8 +191,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-export async function thumbnailSelected(c: string) {
-  const selectedItem = currentItems.find((element) => element.id === c);
+export async function thumbnailSelected(itemId: string) {
+  console.log(itemId)
+  const selectedItem = currentItems.find((element) => element.id === itemId);
 
    let infoSpan = document.getElementById('info-study-description') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.sample.study.description;
@@ -200,9 +203,6 @@ export async function thumbnailSelected(c: string) {
    infoSpan.textContent = selectedItem.slide.sample.study.remarks;
    infoSpan = document.getElementById('info-study-remarks') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.sample.study.remarks;
-
-
-
 
    infoSpan = document.getElementById('info-sample-description') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.sample.description
@@ -218,27 +218,23 @@ export async function thumbnailSelected(c: string) {
    infoSpan = document.getElementById('info-slide-remarks') as HTMLSpanElement;
    infoSpan.textContent = selectedItem.slide.remarks
 
-
-  const f: string[] = ['prepared/o_' + c + '/' + c + '_1.png',
-  'prepared/o_' + c + '/' + c + '_2.png',
-  'prepared/o_' + c + '/' + c + '_3.png',
-  'prepared/o_' + c + '/' + c + '_4.png',
-  'prepared/o_' + c + '/' + c + '_5.png'
+  const f: string[] = ['prepared/o_' + itemId + '/' + itemId + '_1.png',
+  'prepared/o_' + itemId + '/' + itemId + '_2.png',
+  'prepared/o_' + itemId + '/' + itemId + '_3.png',
+  'prepared/o_' + itemId + '/' + itemId + '_4.png',
+  'prepared/o_' + itemId + '/' + itemId + '_5.png'
   ];
 
-  viewer = new Viewer('#viewer-container', 'viewer', 400, 400, f, null);
-  const slider = new FocusSlider(viewer, "#viewer-focus-slider");
-  const scaleBar = new ScaleBar(viewer, "#viewer-scalebar", selectedItem.voxel_width);
+  const viewer = new Viewer('#viewer-container', 'viewer', 400, 400, f, null);
+  new FocusSlider(viewer, "#viewer-focus-slider");
+  new ScaleBar(viewer, "#viewer-scalebar", selectedItem.voxel_width);
 }
 
 
-
-
-
 async function showThumbnails(
-  species_id: string | null,
-  genus_id: string | null,
-  family_id: string | null) {
+  speciesId: string | null,
+  genusId: string | null,
+  familyId: string | null) {
   if (!families) families = await DefaultService.getFamilies(CATALOG_ID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
@@ -248,36 +244,36 @@ async function showThumbnails(
 
   // Ensure checkbox exists before accessing `.checked`
   const checkbox = document.getElementById('includeNonReference') as HTMLInputElement | null;
-  const includeNonReference = checkbox ? checkbox.checked : true; //
+  const referenceOnly = checkbox ? !checkbox.checked : false; //
 
   // Add const for if is_genus_check
   const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
-  const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+  const includeGenusType = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
   // Add const for if is_species_check
   const speciesTypeCheckbox = document.getElementById('includeSpeciesType') as HTMLInputElement | null;
-  const is_include_if_species_is_type = speciesTypeCheckbox ? speciesTypeCheckbox.checked : true;
-
-
+  const includeSpeciesType = speciesTypeCheckbox ? speciesTypeCheckbox.checked : true;
 
   // Get type_user_max_results that is filled in from HTML. If not there default defined in main.py
   const maxResultsInput = document.getElementById('max-results-input') as HTMLInputElement | null;
   const maxResultsRaw = maxResultsInput?.value?.trim();
   const maxResults = maxResultsRaw && !isNaN(parseInt(maxResultsRaw)) ? parseInt(maxResultsRaw) : 100; // default to 100
 
- // Get value for page
- // const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;
+  // Get value for page
+  // const pageDisplay = document.getElementById('page-number') as HTMLSpanElement;
 
- try {
-     let currentItems;
+  try {
+    // console.log("speciesId: " + speciesId)
+    // console.log("genusId: " + genusId)
+    // console.log("familyId: " + familyId)
 
-  if (species_id) {
-    currentItems = await DefaultService.getItems(null, null, species_id, undefined, is_include_if_species_is_type, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
-  } else if (genus_id) {
-    currentItems = await DefaultService.getItems(null, genus_id, null, is_include_if_genus_is_type, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
-  } else {
-    currentItems = await DefaultService.getItems(family_id, null, null, undefined, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
-  }
+    if (speciesId) {
+      currentItems = await DefaultService.getItems(null, null, speciesId, undefined, includeSpeciesType, referenceOnly, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    } else if (genusId) {
+      currentItems = await DefaultService.getItems(null, genusId, null, includeGenusType, undefined, referenceOnly, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    } else {
+      currentItems = await DefaultService.getItems(familyId, null, null, undefined, undefined, referenceOnly, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    }
 
     if (!currentItems || currentItems.length === 0) {
       console.warn("No items found for the selected filters.");
@@ -305,10 +301,6 @@ async function showThumbnails(
 }
 
 
-
-
-
-
 // #TODO ======= CLEAR GALLERY AND THUMBNAILS =======
 // add a box that returns the  get genera_by_letter function and place it within a box
 
@@ -321,12 +313,14 @@ function hideViewerAndInfo() {
   if (infoPanel) infoPanel.style.display = 'none';
 }
 
+
 function showViewerAndInfo() {
   const viewer = document.getElementById('viewer-container');
   const infoPanel = document.getElementById('infopanel');
   if (viewer) viewer.style.display = 'block';
   if (infoPanel) infoPanel.style.display = 'block';
 }
+
 
 // What happens when you click Alphabet-filter
 document.addEventListener("DOMContentLoaded", () => {
@@ -365,11 +359,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Get the checkbox state for whether to include genera with is_type
         const generaTypeCheckbox = document.getElementById('includeGeneraType') as HTMLInputElement | null;
-        const is_include_if_genus_is_type = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
+        const includeGenusType = generaTypeCheckbox ? generaTypeCheckbox.checked : true;
 
         // Now we call the API using get.generaByLetter(letter)
         try {
-          const genera = await DefaultService.getGeneraByLetter(letter, is_include_if_genus_is_type);
+          const genera = await DefaultService.getGeneraByLetter(letter, includeGenusType);
           resultsBox.innerHTML = "";
 
           if (!genera || genera.length === 0) {
@@ -378,15 +372,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
 
-          genera.forEach((genus: { genus_id: string; genus_name: string; family_name: string }) => {
+          genera.forEach((genus: { genusId: string; genus_name: string; family_name: string }) => {
             const div = document.createElement("div");
             div.className = "result-item";
-            div.dataset.genusId = genus.genus_id;
+            div.dataset.genusId = genus.genusId;
             div.innerHTML = `<strong>${genus.genus_name}</strong><br>
                              <span class="family-name">(${genus.family_name})</span>`;
 
             div.addEventListener("click", async () => {
-              await fetchSpecies(genus.genus_id, div);
+              await fetchSpecies(genus.genusId, div);
             });
 
             resultsBox.appendChild(div);
@@ -399,12 +393,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }); //
 
+
 // from the last step we have all the genera filled. once clicked we want to return the species.
 //ToDo: filter is_type species from this species fetch #issue 16
 async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
   console.log(`Fetching species for genus ID: ${genusId}`);
   try {
-    const speciesList = await DefaultService.getSpecies(genusId);
+    const speciesList = await DefaultService.getSpecies(genusId, null);
 
     let speciesContainer = genusElement.querySelector(".species-container") as HTMLElement;
     if (!speciesContainer) {
@@ -425,7 +420,6 @@ async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
       showThumbnails(null, genusId, null);
     });
     speciesContainer.appendChild(allOption);
-
 
     // If the user doesnt select all insetad they want a specific species
     if (speciesList && speciesList.length > 0) {
@@ -450,4 +444,3 @@ async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
     console.error("Error fetching species:", error);
   }
 }
-
