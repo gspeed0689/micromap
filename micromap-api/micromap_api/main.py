@@ -1,6 +1,7 @@
 import os
 from hashlib import sha256
-from typing import Optional, List, Sequence
+from typing import Optional, List, Sequence, Dict
+from uuid import UUID
 
 from fastapi import FastAPI, Query, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,8 +11,8 @@ from fastapi.security import APIKeyHeader
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMItem, ORMFamily, ORMGenus, ORMSpecies, ORMStudy, ORMSample, ORMSlide, ORMCatalog
 from .postgresqldatarepository import PostgresqlDataRepository
-from .models import (Catalog, Family, Genus, Species, SpeciesBase, ItemCreateDTO,
-                     Item, Study, SampleCreateDTO, Sample, SlideCreateDTO, Slide)
+from .models import (Catalog, Family, Genus, Species, ItemCreateDTO, Item, Study, SampleCreateDTO, Sample,
+                     SlideCreateDTO, Slide)
 
 
 def generate_unique_id(route: APIRoute):
@@ -51,7 +52,9 @@ async def get_root():
     return {"message": "MicroMap API"}
 
 
-@public.get("/items/", response_model=List[Item])
+@public.get("/items/",
+            response_model=List[Item],
+            description="Gets all items for the specified family, genus or species.")
 async def get_items(
         family_id: Optional[str] = Query(default=None),
         genus_id: Optional[str] = Query(default=None),
@@ -127,9 +130,14 @@ async def get_items(
 
     return []
 
-@secure.post("/items/")
-async def post_item(item: ItemCreateDTO):
-    return { "id": repository.add_item(item) }
+@secure.post("/items/",
+             status_code=201,
+             description="Adds a new item. The id can either be set or generated if null.")
+async def post_item(item: ItemCreateDTO) -> Dict[str, UUID]:
+    try:
+        return {"id": repository.add_item(item)}
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
 
 
 @public.get("/catalogs/", response_model=Sequence[Catalog], description="Gets all catalogs.")
@@ -139,7 +147,7 @@ async def get_catalogs() -> Sequence[ORMCatalog]:
 @secure.post("/catalogs/",
              status_code=201,
              description="Adds a new catalog. The id can either be set or generated if null.")
-async def post_catalog(catalog: Catalog):
+async def post_catalog(catalog: Catalog) -> Dict[str, UUID]:
     try:
         return {"id": repository.add_catalog(catalog)}
     except KeyViolationException as e:
@@ -161,7 +169,7 @@ async def get_families(catalog_id: str) -> Sequence[ORMFamily]:
 @secure.post("/families/",
              status_code=201,
              description="Adds a new family to a catalog. The id can either be set or generated if null.")
-async def post_family(family: Family):
+async def post_family(family: Family) -> Dict[str, UUID]:
     try:
         return {"id": repository.add_family(family)}
     except KeyViolationException as e:
@@ -202,7 +210,7 @@ async def get_genera(
 @secure.post("/genera/",
              status_code=201,
              description="Adds a new genus to a family. The id can either be set or generated if null.")
-async def post_genus(genus: Genus):
+async def post_genus(genus: Genus) -> Dict[str, UUID]:
     try:
         return {"id": repository.add_genus(genus)}
     except KeyViolationException as e:
@@ -228,24 +236,33 @@ async def get_genera_count():
     return {"count": num}
 
 
-@public.get("/species/", response_model=Sequence[Species])
-async def get_species(genera_id: Optional[str] = None, catalog_id: Optional[str] = None) -> Sequence[ORMSpecies]:
+@public.get("/species/",
+            response_model=Sequence[Species],
+            description="Gets all species in a genus or all species in the catalog.")
+async def get_species(genus_id: Optional[str] = None, catalog_id: Optional[str] = None) -> Sequence[ORMSpecies]:
     """ returns species according to genus_id used in species drop down and alphabetical search"""
-    if genera_id:
-        return repository.get_species(genera_id)
+    if genus_id:
+        return repository.get_species(genus_id)
     if catalog_id:
-        return repository.get_species_for_catalog(catalog_id)
+        return repository.get_species_in_catalog(catalog_id)
+    else:
+        return []
 
-@secure.post("/species/", status_code=201)
-async def post_species(species: SpeciesBase):
-    return { "id": repository.add_species(species) }
+@secure.post("/species/",
+             status_code=201,
+             description="Adds a new species to a genus. The id can either be set or generated if null.")
+async def post_species(species: Species) -> Dict[str, UUID]:
+    try:
+        return {"id": repository.add_species(species)}
+    except KeyViolationException as e:
+        raise HTTPException(status_code=409, detail=e.detailed_message)
 
-@secure.put("/species/", status_code=200, responses = {404: {"description": "Species does not exist"}})
+@secure.put("/species/", status_code=200)
 async def put_species(species: Species):
     try:
         repository.update_species(species)
     except EntityDoesNotExistException:
-        return 404
+        return HTTPException(status_code=404, detail="Species does not exist.")
     return
 
 @public.get("/species/count/")
@@ -254,43 +271,46 @@ async def get_species_count():
     return {"count": num}
 
 
-@public.get("/studies/", response_model=Sequence[Study])
+@public.get("/studies/", response_model=Sequence[Study], description="Gets all studies in the catalog.")
 async def get_studies(catalog_id: str) -> Sequence[ORMStudy]:
     return repository.get_studies(catalog_id)
 
-@secure.post("/studies/", status_code=201)
-async def post_study(study: Study):
+@secure.post("/studies/",
+             status_code=201,
+             description="Adds a new study to a catalog. The id can either be set or generated if null.")
+async def post_study(study: Study) -> Dict[str, UUID]:
     try:
-        repository.add_study(study)
+        return {"id": repository.add_study(study)}
     except KeyViolationException as e:
         raise HTTPException(status_code=409, detail=e.detailed_message)
-    return
 
 
-@public.get("/samples/", response_model=Sequence[Sample])
+@public.get("/samples/", response_model=Sequence[Sample], description="Gets all samples in a study.")
 async def get_samples(study_id: str) -> Sequence[ORMSample]:
     return repository.get_samples(study_id)
 
-@secure.post("/samples/", status_code=201)
-async def post_sample(sample: SampleCreateDTO):
+@secure.post("/samples/",
+             status_code=201,
+             description="Adds a new sample to a study. The id can either be set or generated if null.")
+async def post_sample(sample: SampleCreateDTO) -> Dict[str, UUID]:
     try:
-        repository.add_sample(sample)
+        return {"id": repository.add_sample(sample)}
     except KeyViolationException as e:
         raise HTTPException(status_code=409, detail=e.detailed_message)
-    return
 
 
-@public.get("/slides/", response_model=Sequence[Slide])
+@public.get("/slides/", response_model=Sequence[Slide], description="Gets all slides in a sample.")
 async def get_slides(sample_id: str) -> Sequence[ORMSlide]:
     return repository.get_slides(sample_id)
 
-@secure.post("/slides/", status_code=201)
-async def post_slide(slide: SlideCreateDTO):
+@secure.post("/slides/",
+             status_code=201,
+             description="Adds a new slide to a sample. The id can either be set or generated if null.")
+async def post_slide(slide: SlideCreateDTO) -> Dict[str, UUID]:
     try:
-        repository.add_slide(slide)
+        return {"id": repository.add_slide(slide)}
     except KeyViolationException as e:
         raise HTTPException(status_code=409, detail=e.detailed_message)
-    return
 
 
 app.include_router(public)

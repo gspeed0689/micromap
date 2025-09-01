@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, select, func
 from .models import ItemCreateDTO
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMCatalog, ORMFamily, ORMGenus, ORMSpecies, ORMItem, ORMStudy, ORMSample, ORMSlide, ORMBase
-from .models import Catalog, Family, Genus, SpeciesBase, Species, Study, SampleCreateDTO, SlideCreateDTO
+from .models import Catalog, Family, Genus, Species, Study, SampleCreateDTO, SlideCreateDTO
 
 
 class PostgresqlDataRepository:
@@ -112,7 +112,6 @@ class PostgresqlDataRepository:
                     .order_by(ORMGenus.name)
                 ).all()
 
-
     def add_genus(self, new_genus: Genus)-> UUID:
         new_uuid = new_genus.id or uuid4()
         db_item = ORMGenus(id = new_uuid,
@@ -148,16 +147,19 @@ class PostgresqlDataRepository:
                 select(ORMSpecies).where(ORMSpecies.genus_id == genus_id).order_by(ORMSpecies.name)  # type: ignore
             ).all()
 
-    def add_species(self, new_species: SpeciesBase)-> UUID:
-        new_uuid = uuid4()
+    def add_species(self, new_species: Species)-> UUID:
+        new_uuid = new_species.id or uuid4()
         db_item = ORMSpecies(id = new_uuid,
                              name = new_species.name,
                              genus_id = new_species.genus_id,
                              is_type=new_species.is_type)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
+        try:
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
 
         return new_uuid
 
@@ -174,7 +176,7 @@ class PostgresqlDataRepository:
             except NoResultFound:
                 raise EntityDoesNotExistException()
 
-    def get_species_for_catalog(self, catalog_id: str) -> Sequence[ORMSpecies]:
+    def get_species_in_catalog(self, catalog_id: str) -> Sequence[ORMSpecies]:
         with Session(self.engine) as session:
             all_families = select(ORMFamily.id).where(ORMFamily.catalog_id == catalog_id).scalar_subquery()  # type: ignore
             all_genera = select(ORMGenus.id).where(ORMGenus.family_id.in_(all_families)).scalar_subquery()
@@ -189,21 +191,24 @@ class PostgresqlDataRepository:
             return session.scalars(select(ORMStudy).where(ORMStudy.catalog_id == catalog_id)).all()  # type: ignore
 
     def add_study(self, new_study: Study):
-        try:
-            db_item = ORMStudy(
-                id = new_study.id,
-                description = new_study.description,
-                location = new_study.location,
-                remarks = new_study.remarks,
-                is_reference = new_study.is_reference,
-                catalog_id = new_study.catalog_id)
+        new_uuid = new_study.id or uuid4()
+        db_item = ORMStudy(
+            id = new_uuid,
+            description = new_study.description,
+            location = new_study.location,
+            remarks = new_study.remarks,
+            is_reference = new_study.is_reference,
+            catalog_id = new_study.catalog_id)
 
+        try:
             with Session(self.engine) as session:
                 session.add(db_item)
                 session.commit()
         except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
-        return
+
+        return new_uuid
+
 
     # Samples
 
@@ -212,14 +217,16 @@ class PostgresqlDataRepository:
             return session.scalars(select(ORMSample).where(ORMSample.study_id == study_id)).all()  # type: ignore
 
     def add_sample(self, new_sample: SampleCreateDTO):
+        new_uuid = new_sample.id or uuid4()
+        db_item = ORMSample(
+            id = new_uuid,
+            description = new_sample.description,
+            location = new_sample.location,
+            age = new_sample.age,
+            remarks = new_sample.remarks,
+            study_id = new_sample.study_id)
+
         try:
-            db_item = ORMSample(
-                id = new_sample.id,
-                description = new_sample.description,
-                location = new_sample.location,
-                age = new_sample.age,
-                remarks = new_sample.remarks,
-                study_id = new_sample.study_id)
 
             with Session(self.engine) as session:
                 session.add(db_item)
@@ -227,30 +234,37 @@ class PostgresqlDataRepository:
         except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
 
-        return
+        return new_uuid
+
+
+    # Slides
 
     def get_slides(self, sample_id: str) -> Sequence[ORMSlide]:
         with Session(self.engine) as session:
             return session.scalars(select(ORMSlide).where(ORMSlide.sample_id == sample_id)).all()  # type: ignore
 
     def add_slide(self, new_slide: SlideCreateDTO):
-        try:
-            db_item = ORMSlide(
-                id = new_slide.id,
-                description = new_slide.description,
-                remarks = new_slide.remarks,
-                sample_id = new_slide.sample_id)
+        new_uuid = new_slide.id or uuid4()
+        db_item = ORMSlide(
+            id = new_uuid,
+            description = new_slide.description,
+            remarks = new_slide.remarks,
+            sample_id = new_slide.sample_id)
 
+        try:
             with Session(self.engine) as session:
                 session.add(db_item)
                 session.commit()
         except IntegrityError as e:
             raise KeyViolationException('IntegrityError', str(e.orig))
 
-        return
+        return new_uuid
+
+
+    # Items
 
     def add_item(self, new_item: ItemCreateDTO)-> UUID:
-        new_uuid = uuid4()
+        new_uuid = new_item.id or uuid4()
         db_item = ORMItem(
             id = new_uuid,
             key_image = new_item.key_image,
@@ -262,9 +276,12 @@ class PostgresqlDataRepository:
             slide_id = new_item.slide_id,
             voxel_width = new_item.voxel_width)
 
-        with Session(self.engine) as session:
-            session.add(db_item)
-            session.commit()
+        try:
+            with Session(self.engine) as session:
+                session.add(db_item)
+                session.commit()
+        except IntegrityError as e:
+            raise KeyViolationException('IntegrityError', str(e.orig))
 
         return new_uuid
 

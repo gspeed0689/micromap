@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   defaultOption.disabled = true;
   familySelectBox.add(defaultOption);
 
-  const families = await DefaultService.families(CATALOG_ID);
+  const families = await DefaultService.getFamilies(CATALOG_ID);
 
   for (const family of families) {
     familySelectBox.add(new Option(family.name, family.id));
@@ -100,8 +100,8 @@ Genera change works, defaults to select an option, or ALL or genera, then popula
         generaSelectBox.firstChild.remove()
       }
 
-        // Add default "Please select a genera" option
-      const defaultOption = new Option('Please select a genera', '', true, true);
+        // Add default "Please select a genus" option
+      const defaultOption = new Option('Please select a genus', '', true, true);
       defaultOption.disabled = true;
       generaSelectBox.add(defaultOption);
 
@@ -114,7 +114,7 @@ Genera change works, defaults to select an option, or ALL or genera, then popula
 
 
     // Populate genera with API call
-      const genera = await DefaultService.genera(familyid, is_include_if_genus_is_type);
+      const genera = await DefaultService.getGenera(familyid, is_include_if_genus_is_type);
       for (const genus of genera) {
         generaSelectBox.add(new Option(genus.name, genus.id));
       }
@@ -138,7 +138,7 @@ Genera change works, defaults to select an option, or ALL or genera, then popula
 
       // Populate with species from the API
       if (generaid != null) {
-        const speciesList = await DefaultService.species(generaid);
+        const speciesList = await DefaultService.getSpecies(generaid);
         for (const species of speciesList) {
           speciesSelectBox.add(new Option(species.name, species.id));
         }
@@ -239,7 +239,7 @@ async function showThumbnails(
   species_id: string | null,
   genus_id: string | null,
   family_id: string | null) {
-  if (!families) families = await DefaultService.families(CATALOG_ID);
+  if (!families) families = await DefaultService.getFamilies(CATALOG_ID);
 
   const gallery = document.getElementById('gallery') as HTMLDivElement;
   while (gallery.firstChild) {
@@ -272,11 +272,11 @@ async function showThumbnails(
      let currentItems;
 
   if (species_id) {
-    currentItems = await DefaultService.items(null, null, species_id, undefined, is_include_if_species_is_type, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    currentItems = await DefaultService.getItems(null, null, species_id, undefined, is_include_if_species_is_type, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   } else if (genus_id) {
-    currentItems = await DefaultService.items(null, genus_id, null, is_include_if_genus_is_type, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    currentItems = await DefaultService.getItems(null, genus_id, null, is_include_if_genus_is_type, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   } else {
-    currentItems = await DefaultService.items(family_id, null, null, undefined, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
+    currentItems = await DefaultService.getItems(family_id, null, null, undefined, undefined, includeNonReference, undefined, undefined, undefined, 'abundance', maxResults, currentPage);
   }
 
     if (!currentItems || currentItems.length === 0) {
@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Now we call the API using get.generaByLetter(letter)
         try {
-          const genera = await DefaultService.generaByLetter(letter, is_include_if_genus_is_type);
+          const genera = await DefaultService.getGeneraByLetter(letter, is_include_if_genus_is_type);
           resultsBox.innerHTML = "";
 
           if (!genera || genera.length === 0) {
@@ -404,7 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function fetchSpecies(genusId: string, genusElement: HTMLElement) {
   console.log(`Fetching species for genus ID: ${genusId}`);
   try {
-    const speciesList = await DefaultService.species(genusId);
+    const speciesList = await DefaultService.getSpecies(genusId);
 
     let speciesContainer = genusElement.querySelector(".species-container") as HTMLElement;
     if (!speciesContainer) {

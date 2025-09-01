@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 
 
@@ -25,108 +25,67 @@ class Genus(MicromapBaseModel):
     is_type: bool = False
 
 
-class SpeciesBase(BaseModel):
+class Species(MicromapBaseModel):
     name: str
     genus_id: UUID
     is_type: bool = False
 
-class Species(SpeciesBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True
-
-class SubSpeciesBase(BaseModel):
+class SubSpecies(MicromapBaseModel):
     name: str
     species_id: UUID
 
-class SubSpecies(SpeciesBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True
-
-
-class StudyBase(BaseModel):
+class Study(MicromapBaseModel):
     description: Optional[str]
     location: Optional[str]
     remarks: Optional[str]
     catalog_id: UUID
     is_reference: bool = False
 
-class Study(StudyBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True
-
-
-class SampleBase(BaseModel):
+class Sample(MicromapBaseModel):
     description: Optional[str]
     location: Optional[str]
     age: Optional[str]
     remarks: Optional[str]
-    study: StudyBase
+    study: Study
 
-class SampleCreateDTO(BaseModel):
-    id: UUID
+class SampleCreateDTO(MicromapBaseModel):  # Contains study_id instead of Study
     description: Optional[str]
     location: Optional[str]
     age: Optional[str]
     remarks: Optional[str]
     study_id: UUID
 
-class Sample(SampleBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True
-
-
-class SlideBase(BaseModel):
+class Slide(MicromapBaseModel):
     description: Optional[str]
     remarks: Optional[str]
-    sample: SampleBase
+    sample: Sample
 
-class Slide(SlideBase):
-    id: UUID
-
-    class Config:
-        from_attributes = True
-
-class SlideCreateDTO(BaseModel):
-    id: UUID
+class SlideCreateDTO(MicromapBaseModel):  # Contains sample_id instead of Sample
     description: Optional[str]
     remarks: Optional[str]
     sample_id: UUID
 
 
-class ItemBase(BaseModel):
+class Item(MicromapBaseModel):
     key_image: str
     family_id: Optional[UUID] = None
     genus_id: Optional[UUID] = None
     species_id: Optional[UUID] = None
     subspecies_id: Optional[UUID] = None
     comment: Optional[str] = None
-
     slide: Slide = None
-
     voxel_width: float = None
 
-class ItemCreateDTO(BaseModel):
+class ItemCreateDTO(MicromapBaseModel):  # Contains slide_id instead of Slide
     key_image: str
     family_id: Optional[UUID] = None
     genus_id: Optional[UUID] = None
     species_id: Optional[UUID] = None
     subspecies_id: Optional[UUID] = None
     comment: Optional[str] = None
-
     slide_id: UUID
-
     voxel_width: float = None
-
-class Item(ItemBase):
-    id: UUID
-
-    class Config:
-        from_attributes = True
