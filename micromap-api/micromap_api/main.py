@@ -7,6 +7,8 @@ from fastapi import FastAPI, Query, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute, APIRouter
 from fastapi.security import APIKeyHeader
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMItem, ORMFamily, ORMGenus, ORMSpecies, ORMStudy, ORMSample, ORMSlide, ORMCatalog
@@ -43,8 +45,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-repository = PostgresqlDataRepository()
-repository.create_database()  # Create all tables. Will not attempt to recreate tables already present.
+
+# Try to connect to the database. Allow the API to run without a database connection in BUILD_MODE, since we only
+# require the API to serve the OpenAPI JSON specification.
+try:
+    repository = PostgresqlDataRepository()
+    repository.create_database()  # Create all tables. Will not attempt to recreate tables already present.
+except OperationalError as exc:
+    if int(os.getenv("BUILD_MODE", "0")):
+        print("Error connecting to the database: ", exc)
+    else:
+        raise exc
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request_, e: Exception):
+    error_type = f"{e.__class__.__module__}.{e.__class__.__name__}"
+    return JSONResponse(status_code=500, content={"error": error_type})
 
 
 @public.get("/")
@@ -157,7 +174,7 @@ async def post_catalog(catalog: Catalog) -> Dict[str, UUID]:
 async def put_catalog(catalog: Catalog):
     try:
         repository.update_catalog(catalog)
-    except EntityDoesNotExistException as e:
+    except EntityDoesNotExistException:
         return HTTPException(status_code=404, detail="Catalog does not exist.")
     return
 
