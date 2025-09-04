@@ -79,34 +79,34 @@ nvm use latest
 ```
 
 ### Install dependencies
-To install all dependencies defined in `package.json`, run this command from the `wwwroot` directory:
+To install all dependencies defined in `package.json`, run this command from the `micromap-web` directory:
 ```shell
 npm install
 ```
 
 ### Generate the OpenAPI client module
-An [axios](https://axios-http.com/) client should be generated using the command below (run from the `wwwroot` directory). In case the Micromap API is changed, the client should be re-generated.
+An [axios](https://axios-http.com/) client should be generated using the command below (run from the `micromap-web` directory). In case the Micromap API is changed, the client should be re-generated.
 *Note: This requires a running micromap_api webserver. See above.*
 ```shell
 npm run generate-client
 ```
 
 ### Generate CSS
-To compile the tailwind-annotated css, run this command in the `wwwroot` directory: 
+To compile the tailwind-annotated css, run this command in the `micromap-web` directory: 
 ```bash
 npx tailwindcss -i ./src/css/style.css -o ./css/pollenbase.css
 ```
 *You can add **--watch** to hot rebuild based on changes in the source files.*
 
 ### Compile the client module
-To compile the typescript source files to a javascript bundle, run this command in the `wwwroot` directory:
+To compile the typescript source files to a javascript bundle, run this command in the `micromap-web` directory:
 ```bash
 npx webpack
 ```
 *You can add **--watch** to hot rebuild based on changes in the source files.*
 
 ### Configure and run the website
-The API address and catalog id are configured in the file `config.js` in `wwwroot`.
+The API address and catalog id are configured in the file `config.js` in `micromap-web`.
 
 Use a lightweight static server to serve the website. 
 ```shell

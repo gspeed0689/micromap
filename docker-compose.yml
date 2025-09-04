@@ -54,7 +54,7 @@ services:
         restart: true
     image: micromap-web:0.0.1
     build:
-      context: ./wwwroot
+      context: ./micromap-web
       args:
         API_IMAGE: "micromap-api:0.0.1"
     ports:
