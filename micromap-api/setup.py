@@ -14,7 +14,8 @@ setuptools.setup(
     ],
     python_requires='>=3.9',
     install_requires=[
-        'fastapi~=0.100.1 ',
+        'fastapi~=0.100.1',
+        'uvicorn~=0.23.2',
         'pydantic~=2.1.1',
         'pydantic-settings~=2.0.3',
         'sqlalchemy~=2.0.23',

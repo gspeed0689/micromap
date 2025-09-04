@@ -15,10 +15,10 @@ RUN cd /src && \
     npx tailwindcss -i ./src/css/style.css -o ./css/pollenbase.css && \
     npx webpack && \
     mkdir /html && \
-    cp -r /src/dist /src/css /src/index.html /src/config.js /html/
+    cp -r /src/dist /src/css /src/index.html /html/
 
 # Build the final nginx container image.
 FROM nginx:stable-alpine-slim
-COPY --from=builder /html/ ./src/config.js /usr/share/nginx/html/
-
-HEALTHCHECK --timeout=3s --start-period=30s CMD wget -O /dev/null http://localhost || exit 1
+COPY --from=builder /html/ /usr/share/nginx/html/
+COPY --chmod=775 ./write-config.sh /docker-entrypoint.d/
+COPY default.conf.template /etc/nginx/conf.d/

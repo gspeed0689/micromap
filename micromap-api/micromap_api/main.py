@@ -9,6 +9,7 @@ from fastapi.routing import APIRoute, APIRouter
 from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from .exceptions import KeyViolationException, EntityDoesNotExistException
 from .ormmodels import ORMItem, ORMFamily, ORMGenus, ORMSpecies, ORMStudy, ORMSample, ORMSlide, ORMCatalog
@@ -35,7 +36,10 @@ async def check_api_key(api_key: str = Security(APIKeyHeader(name='x-api-key', a
 public = APIRouter()
 secure = APIRouter(dependencies=[Depends(check_api_key)])
 
-app = FastAPI(generate_unique_id_function=generate_unique_id)
+app = FastAPI(
+    root_path=os.getenv("ROOT_PATH", ""),
+    generate_unique_id_function=generate_unique_id,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=os.getenv("PROXY_SERVER", ""))
 
 
 # Try to connect to the database. Allow the API to run without a database connection in BUILD_MODE, since we only
