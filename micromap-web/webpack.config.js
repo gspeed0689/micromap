@@ -1,12 +1,12 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/typescript/pollenbase.ts',
+  entry: './src/typescript/micromap.ts',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, './dist'),
     //libraryTarget: 'var',
-    library: 'PollenBase'
+    library: 'MicroMap'
   },
   resolve:{
     extensions: [".ts", ".js"]

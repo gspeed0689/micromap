@@ -287,7 +287,7 @@ async function showThumbnails(
       newDiv.className = 'image-item';
 
       const anchor = document.createElement('a');
-      anchor.href = `javascript:PollenBase.thumbnailSelected('${item.id}')`;
+      anchor.href = `javascript:MicroMap.thumbnailSelected('${item.id}')`;
 
       const img = document.createElement('img');
       img.src = `data:image/png;base64,${item.key_image}`;

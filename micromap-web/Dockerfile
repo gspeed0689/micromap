@@ -12,7 +12,7 @@ COPY --from=api /tmp/openapi.json /src/
 COPY ./ /src/
 RUN cd /src && \
     npx openapi --input ./openapi.json --output ./src/typescript/client --client axios && \
-    npx tailwindcss -i ./src/css/style.css -o ./css/pollenbase.css && \
+    npx tailwindcss -i ./src/css/style.css -o ./css/micromap.css && \
     npx webpack && \
     mkdir /html && \
     cp -r /src/dist /src/css /src/index.html /html/

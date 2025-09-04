@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <title>MicroMap - Pollen reference database</title>
-  <link rel="stylesheet" href="css/pollenbase.css" />
+  <link rel="stylesheet" href="css/micromap.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
     integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -57,7 +57,7 @@
 <body>
 
   <!-- The grid-container holds the isreference button, ischeck_genus, is_check_specie, max_results and page
-   if is_reference unchecked then chcek button should be hidden see toggledisappear_is_check in pollenbase.ts-->
+   if is_reference unchecked then chcek button should be hidden see toggledisappear_is_check in micromap.ts-->
   <div class="grid-container">
     <div class="item1">
       <div class="header">
@@ -193,23 +193,23 @@
   </div>
 
    <!-- Section: Drop down menu (default) -->
-  <!--<script src="js/pollenbase.js" ></script>-->
+  <!--<script src="js/micromap.js" ></script>-->
   <script>
     var element = document.getElementById('family-select');
     element.addEventListener("change", function () {
-      PollenBase.onFamilyChange()
+      MicroMap.onFamilyChange()
     });
     element = document.getElementById('genera-select');
     element.addEventListener("change", function () {
-      PollenBase.onGeneraChange(element)
+      MicroMap.onGeneraChange(element)
     });
     element = document.getElementById('species-select');
     element.addEventListener("change", function () {
-      PollenBase.onSpeciesChange(element)
+      MicroMap.onSpeciesChange(element)
     });
 
-    PollenBase.populateFamilySelect();
-    PollenBase.onFamilyChange();
+    MicroMap.populateFamilySelect();
+    MicroMap.onFamilyChange();
 
     <!--<Alpabetical search option>-->
      document.getElementById("toggle-ribbon").addEventListener("click", function () {
