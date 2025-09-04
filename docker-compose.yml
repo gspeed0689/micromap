@@ -18,5 +18,45 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_USER: ${PGUSER}
       POSTGRES_DB: ${PGDATABASE}
+      PGUSER: ${PGUSER}
     ports:
       - "${PGPORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "--username", "${PGUSER}", "--dbname", "${PGDATABASE}"]
+      start_period: 30s
+
+  api:
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    image: micromap-api:0.0.1
+    build:
+      context: ./micromap-api
+    ports:
+      - "8000:8000"
+    environment:
+      PGHOST: db
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      PGPORT: ${PGPORT:-5432}
+      API_KEY_HASH: ${API_KEY_HASH}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      MAX_RESULTS: ${MAX_RESULTS}
+
+  web:
+    depends_on:
+      api:
+        condition: service_healthy
+        restart: true
+    image: micromap-web:0.0.1
+    build:
+      context: ./wwwroot
+      args:
+        API_IMAGE: "micromap-api:0.0.1"
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_HOST=${HOSTNAME}
+      - NGINX_PORT=80

@@ -53,7 +53,7 @@ try:
     repository.create_database()  # Create all tables. Will not attempt to recreate tables already present.
 except OperationalError as exc:
     if int(os.getenv("BUILD_MODE", "0")):
-        print("Error connecting to the database: ", exc)
+        print("Error connecting to the database: ", exc, flush=True)
     else:
         raise exc
 
