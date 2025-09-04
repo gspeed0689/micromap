@@ -21,7 +21,8 @@ class PostgresqlDataRepository:
         user = os.getenv("PGUSER", "postgres")
         password = os.getenv("PGPASSWORD", "postgres")
         port = os.getenv("PGPORT", "5432")
-        self.engine = create_engine(f"postgresql://{user}:{password}@{server}:{port}/{database}", echo=True)
+        echo = bool(os.getenv("BUILD_MODE", False))  # Suppress logging all statements in production mode.
+        self.engine = create_engine(f"postgresql://{user}:{password}@{server}:{port}/{database}", echo=echo)
 
     def create_database(self):
         ORMBase.metadata.create_all(self.engine)  # ORMBase.metadata is the collection of all ORM tables.
