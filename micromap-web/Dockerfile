@@ -23,3 +23,7 @@ FROM nginx:stable-alpine-slim
 COPY --from=builder /html/ /usr/share/nginx/html/
 COPY --chmod=775 ./write-config.sh /docker-entrypoint.d/
 COPY default.conf.template /etc/nginx/conf.d/
+
+LABEL org.opencontainers.image.source="https://github.com/umcu-isi/micromap"
+LABEL org.opencontainers.image.vendor="Image Sciences Institute, University Medical Center Utrecht"
+LABEL org.opencontainers.image.description="MicroMap web server"
