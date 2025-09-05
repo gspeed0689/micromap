@@ -11,6 +11,7 @@ FROM node:slim AS builder
 COPY --from=api /tmp/openapi.json /src/
 COPY ./ /src/
 RUN cd /src && \
+    npm install && \
     npx openapi --input ./openapi.json --output ./src/typescript/client --client axios && \
     npx tailwindcss -i ./src/css/style.css -o ./css/micromap.css && \
     npx webpack && \

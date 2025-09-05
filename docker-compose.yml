@@ -30,7 +30,7 @@ services:
       db:
         condition: service_healthy
         restart: true
-    image: micromap-api:0.0.1
+    image: ${DOCKER_REGISTRY}micromap-api:0.0.1
     build:
       context: ./micromap-api
     ports:
@@ -52,7 +52,7 @@ services:
       api:
         condition: service_healthy
         restart: true
-    image: micromap-web:0.0.1
+    image: ${DOCKER_REGISTRY}micromap-web:0.0.1
     build:
       context: ./micromap-web
       args:

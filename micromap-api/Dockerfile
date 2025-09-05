@@ -1,8 +1,10 @@
 FROM python:3.9-slim
 
 # Copy and build and install the API.
-COPY ./ /src/
-RUN apt-get update && \
+RUN --mount=type=bind,target=/src,source=./,rw=true \
+    --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     pip install --no-cache-dir -r /src/requirements.txt && \
     pip install --no-cache-dir gunicorn && \
