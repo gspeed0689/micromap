@@ -37,7 +37,7 @@ public = APIRouter()
 secure = APIRouter(dependencies=[Depends(check_api_key)])
 
 app = FastAPI(
-    root_path=os.getenv("ROOT_PATH", ""),
+    root_path=os.getenv("ROOT_PATH", "") + "/api",
     generate_unique_id_function=generate_unique_id,
 )
 

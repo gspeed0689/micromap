@@ -44,7 +44,7 @@ services:
       API_KEY_HASH: ${API_KEY_HASH}
       CORS_ORIGINS: ${CORS_ORIGINS}
       MAX_RESULTS: ${MAX_RESULTS}
-      ROOT_PATH: /${ROOT_PATH}/api  # Should not have a trailing slash
+      ROOT_PATH: ${ROOT_PATH}  # Should not have a trailing slash
       PROXY_SERVER: web
 
   web:
@@ -65,5 +65,5 @@ services:
       API_HOST: api
       CATALOG_ID: ${CATALOG_ID}
     healthcheck:
-      test: wget -O /dev/null http://localhost/${ROOT_PATH} || exit 1
+      test: wget -O /dev/null http://localhost${ROOT_PATH} || exit 1
       start_period: 30s
