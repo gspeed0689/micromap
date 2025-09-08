@@ -13,8 +13,8 @@ RUN --mount=type=bind,target=/src,source=./,rw=true \
 EXPOSE 8000
 HEALTHCHECK --timeout=3s --start-period=30s CMD curl -f http://localhost:8000/
 
-# Run gunicorn -k uvicorn.workers.UvicornWorker for production.
-ENTRYPOINT ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "micromap_api.main:app", "--workers", "4", "--bind", "0.0.0.0:8000"]
+# Run gunicorn -k uvicorn.workers.UvicornWorker for production. Bind on IPv4 and IPv6.
+ENTRYPOINT ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "micromap_api.main:app", "--workers", "4", "--bind", "[::]:8000"]
 
 LABEL org.opencontainers.image.source="https://github.com/umcu-isi/micromap"
 LABEL org.opencontainers.image.vendor="Image Sciences Institute, University Medical Center Utrecht"
