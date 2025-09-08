@@ -7,4 +7,4 @@ CATALOG_ID = "$CATALOG_ID";
 EOF
 
 # Substitute the environment variables in the nginx configuration template.
-envsubst '$ROOT_PATH $API_HOST' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+envsubst '$HTTP_PORT $ROOT_PATH $API_HOST' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf

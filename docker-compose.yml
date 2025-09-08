@@ -60,6 +60,7 @@ services:
     ports:
       - "80:80"
     environment:
+      HTTP_PORT: ${HTTP_PORT:-80}
       ROOT_PATH: ${ROOT_PATH}  # Should not have a trailing slash
       API_HOST: api
       CATALOG_ID: ${CATALOG_ID}
