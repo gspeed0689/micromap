@@ -1,11 +1,13 @@
 {
-  "name": "wwwtest",
+  "name": "microtool",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "generate-client": "openapi --input http://localhost:8000/openapi.json --output src/typescript/client --client axios",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack serve --open --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +27,9 @@
     "ts-loader": "^9.4.4",
     "typescript": "^5.1.6",
     "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.2",
+    "webpack-merge": "^6.0.1"
   },
   "dependencies": {
     "d3": "^5.0.0",

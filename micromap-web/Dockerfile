@@ -14,7 +14,7 @@ RUN cd /src && \
     npm install && \
     npx openapi --input ./openapi.json --output ./src/typescript/client --client axios && \
     npx tailwindcss -i ./src/css/style.css -o ./css/micromap.css && \
-    npx webpack && \
+    npm run build && \
     mkdir /html && \
     cp -r /src/dist /src/css /src/index.html /html/
 

@@ -5,3 +5,4 @@ node_modules/
 /wwwroot/dist
 /wwwroot/src/typescript/client
 /wwwroot/css
+/micromap-web/src/typescript/client
