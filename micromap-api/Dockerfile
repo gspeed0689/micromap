@@ -10,6 +10,12 @@ RUN --mount=type=bind,target=/src,source=./,rw=true \
     pip install --no-cache-dir gunicorn && \
     pip install /src
 
+ENV PGHOSTADDR=localhost
+ENV PGDATABASE=micromap
+ENV PGUSER=postgres
+ENV PGPASSWORD=postgres
+ENV PGPORT=5432
+
 EXPOSE 8000
 HEALTHCHECK --timeout=3s --start-period=30s CMD curl -f http://localhost:8000/
 
